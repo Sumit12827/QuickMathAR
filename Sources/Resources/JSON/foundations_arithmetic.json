@@ -1,0 +1,205 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-02-01",
+  "description": "Interactive arithmetic concepts with visual metaphors and micro-animations",
+  "concepts": [
+    {
+      "id": "addition",
+      "name": "Addition",
+      "symbol": "+",
+      "definition": "Addition is the process of combining two or more quantities to find their total.",
+      "whyItMatters": "In equations, addition appears when quantities are being combined. Understanding addition helps you recognize when terms are being grouped together.",
+      "interactionType": "drag_combine",
+      "visualMetaphor": {
+        "type": "containers",
+        "config": {
+          "itemCounts": [3, 5],
+          "itemStyle": "spheres",
+          "containerStyle": "glass",
+          "colors": ["#3B82F6", "#10B981"]
+        }
+      },
+      "microAnimation": "merge_physics",
+      "insightReveal": "Addition combines separate groups into one total. What was apart is now together.",
+      "quickChallenge": {
+        "question": "If you combine a group of 4 apples with a group of 6 apples, what operation did you just do?",
+        "options": [
+          { "text": "Subtraction", "isCorrect": false, "feedback": "Subtraction takes away. Here we brought groups together." },
+          { "text": "Addition", "isCorrect": true, "feedback": "Exactly! Combining groups is addition." },
+          { "text": "Division", "isCorrect": false, "feedback": "Division splits things into equal parts." }
+        ],
+        "explanation": "When you bring separate groups together, you're adding them."
+      },
+      "conceptualExamples": [
+        {
+          "expression": "3 + 5",
+          "explanation": "Combining a group of 3 with a group of 5 to find the total.",
+          "visualHint": "Imagine 3 blue balls joining 5 green balls in one container."
+        },
+        {
+          "expression": "x + 7",
+          "explanation": "An unknown quantity joining with 7 more.",
+          "visualHint": "A mystery bag of items combined with 7 visible items."
+        }
+      ]
+    },
+    {
+      "id": "subtraction",
+      "name": "Subtraction",
+      "symbol": "−",
+      "definition": "Subtraction is the process of finding the difference between quantities, or taking away one amount from another.",
+      "whyItMatters": "Subtraction is the key to isolating variables in equations. It's the inverse of addition—it undoes what addition does.",
+      "interactionType": "swipe_remove",
+      "visualMetaphor": {
+        "type": "container_with_removal",
+        "config": {
+          "startCount": 10,
+          "itemStyle": "spheres",
+          "removalZoneStyle": "fade_out"
+        }
+      },
+      "microAnimation": "fade_settle",
+      "insightReveal": "Subtraction takes away from a group. What's left is the difference.",
+      "quickChallenge": {
+        "question": "You have 12 cookies and eat 4. What happened mathematically?",
+        "options": [
+          { "text": "12 + 4", "isCorrect": false, "feedback": "Adding would give you more cookies, not fewer!" },
+          { "text": "12 − 4", "isCorrect": true, "feedback": "Yes! Eating (removing) cookies is subtraction." },
+          { "text": "12 × 4", "isCorrect": false, "feedback": "Multiplication would multiply your cookies." }
+        ],
+        "explanation": "When you remove items from a group, you're subtracting."
+      },
+      "conceptualExamples": [
+        {
+          "expression": "10 − 4",
+          "explanation": "Starting with 10 and removing 4 to find what remains.",
+          "visualHint": "10 objects, then 4 float away leaving the rest."
+        },
+        {
+          "expression": "x − 3",
+          "explanation": "An unknown quantity with 3 taken away.",
+          "visualHint": "A mystery pile with 3 items being removed."
+        }
+      ]
+    },
+    {
+      "id": "multiplication",
+      "name": "Multiplication",
+      "symbol": "×",
+      "definition": "Multiplication is repeated addition—it tells us what we get when we have multiple groups of the same size.",
+      "whyItMatters": "In equations, multiplication appears as a coefficient (like 3x meaning '3 groups of x'). To solve, you undo it with division.",
+      "interactionType": "tap_replicate",
+      "visualMetaphor": {
+        "type": "group_replicator",
+        "config": {
+          "baseCount": 4,
+          "maxMultiplier": 5,
+          "itemStyle": "spheres",
+          "replicateAnimation": "spread_out"
+        }
+      },
+      "microAnimation": "duplicate_spread",
+      "insightReveal": "Multiplication creates copies of a group. More groups means more total.",
+      "quickChallenge": {
+        "question": "If you have 3 bags with 4 marbles each, what's the total? What operation?",
+        "options": [
+          { "text": "3 + 4 = 7 marbles", "isCorrect": false, "feedback": "Addition would just combine 3 and 4, not account for bags." },
+          { "text": "3 × 4 = 12 marbles", "isCorrect": true, "feedback": "Right! 3 groups of 4 is multiplication." },
+          { "text": "4 − 3 = 1 marble", "isCorrect": false, "feedback": "Subtraction takes away, it doesn't count groups." }
+        ],
+        "explanation": "When you have multiple equal groups, you multiply."
+      },
+      "conceptualExamples": [
+        {
+          "expression": "4 × 6",
+          "explanation": "4 groups, each containing 6 items.",
+          "visualHint": "Watch 1 group of 6 duplicate into 4 identical groups."
+        },
+        {
+          "expression": "3x",
+          "explanation": "'3 groups of x'—whatever x is, we have 3 copies of it.",
+          "visualHint": "A mystery box that clones itself 3 times."
+        }
+      ]
+    },
+    {
+      "id": "division",
+      "name": "Division",
+      "symbol": "÷",
+      "definition": "Division is splitting a quantity into equal parts, or finding how many times one number fits into another.",
+      "whyItMatters": "Division is how we isolate a variable that's been multiplied. If you have '3x', dividing by 3 gives just 'x'.",
+      "interactionType": "drag_distribute",
+      "visualMetaphor": {
+        "type": "fair_sharing",
+        "config": {
+          "totalItems": 12,
+          "numBaskets": 3,
+          "itemStyle": "spheres",
+          "basketStyle": "containers"
+        }
+      },
+      "microAnimation": "distribute_settle",
+      "insightReveal": "Division shares equally. Everyone gets the same amount.",
+      "quickChallenge": {
+        "question": "You have 15 candies to share equally among 5 friends. What operation finds how many each gets?",
+        "options": [
+          { "text": "15 + 5", "isCorrect": false, "feedback": "Addition combines, it doesn't share out." },
+          { "text": "15 − 5", "isCorrect": false, "feedback": "Subtraction removes, not distributes evenly." },
+          { "text": "15 ÷ 5", "isCorrect": true, "feedback": "Yes! Division splits into equal parts." }
+        ],
+        "explanation": "Fair sharing means dividing the total equally."
+      },
+      "conceptualExamples": [
+        {
+          "expression": "12 ÷ 4",
+          "explanation": "Splitting 12 into 4 equal groups.",
+          "visualHint": "12 items spreading evenly into 4 baskets."
+        },
+        {
+          "expression": "x ÷ 2",
+          "explanation": "Splitting an unknown quantity in half.",
+          "visualHint": "A mystery pile dividing into two equal parts."
+        }
+      ]
+    },
+    {
+      "id": "order_of_operations",
+      "name": "Order of Operations",
+      "symbol": "( )",
+      "definition": "The order of operations is the agreed sequence for calculations: Parentheses, Exponents, Multiplication/Division (left to right), Addition/Subtraction (left to right).",
+      "whyItMatters": "Understanding order helps you read equations correctly and solve them by reversing operations in the right sequence.",
+      "interactionType": "step_through",
+      "visualMetaphor": {
+        "type": "expression_highlighter",
+        "config": {
+          "expression": "2 + 3 × 4",
+          "correctOrder": ["multiplication", "addition"],
+          "highlightColors": ["#F59E0B", "#3B82F6"]
+        }
+      },
+      "microAnimation": "collapse_transform",
+      "insightReveal": "The order matters! Different orders give different answers. Math has rules so everyone agrees.",
+      "quickChallenge": {
+        "question": "In '2 + 3 × 4', which operation happens first?",
+        "options": [
+          { "text": "2 + 3 = 5 first", "isCorrect": false, "feedback": "Addition comes after multiplication in the order of operations." },
+          { "text": "3 × 4 = 12 first", "isCorrect": true, "feedback": "Correct! Multiplication before addition." },
+          { "text": "It doesn't matter", "isCorrect": false, "feedback": "It does matter! Try both orders and see different results." }
+        ],
+        "explanation": "Multiplication and division are done before addition and subtraction."
+      },
+      "conceptualExamples": [
+        {
+          "expression": "2 + 3 × 4",
+          "explanation": "Multiply first (3×4=12), then add (2+12=14).",
+          "visualHint": "Watch '3 × 4' collapse into '12', then '2 + 12' collapse into '14'."
+        },
+        {
+          "expression": "(2 + 3) × 4",
+          "explanation": "Parentheses first (2+3=5), then multiply (5×4=20).",
+          "visualHint": "The parentheses glow, collapse to '5', then '5 × 4' becomes '20'."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,657 @@
+{
+    "version": "2.0",
+    "equationType": "quadratic",
+    "displayName": "Quadratic Equations",
+    "definition": "A quadratic equation is an equation where the highest power of the variable is 2 (squared). When graphed, they form a curved shape called a parabola.",
+    "solvingMethodConcept": "Rewrite the equation so we can identify where the parabola crosses zero. Factoring breaks the expression into parts that multiply together.",
+    "visualMetaphor": {
+        "type": "fountain_parabola",
+        "description": "Like a fountain of water—goes up, reaches a peak (vertex), and comes back down. The roots are where the water lands.",
+        "animationPreset": "water_arc"
+    },
+    "conceptFlow": [
+        {
+            "page": "hook",
+            "title": "Every thrown ball follows this shape...",
+            "visual": "animated_fountain",
+            "interaction": "tap_to_reveal"
+        },
+        {
+            "page": "discovery",
+            "title": "Shape the parabola",
+            "visual": "interactive_parabola",
+            "interaction": "slider_coefficients",
+            "insight": "The 'a' value controls width and direction. Positive opens up, negative opens down."
+        },
+        {
+            "page": "connection",
+            "scenarios": [
+                {
+                    "icon": "🏀",
+                    "title": "Basketball arc",
+                    "description": "Predicting where the ball will land"
+                },
+                {
+                    "icon": "🌉",
+                    "title": "Bridge design",
+                    "description": "Arches follow parabolic curves"
+                },
+                {
+                    "icon": "📈",
+                    "title": "Profit optimization",
+                    "description": "Maximum profit at the vertex"
+                }
+            ]
+        },
+        {
+            "page": "challenge",
+            "question": "A parabola has roots at x = 2 and x = −3. Where is the vertex?",
+            "options": [
+                {
+                    "text": "At x = 2",
+                    "isCorrect": false,
+                    "feedback": "The vertex is between the roots, not at one of them."
+                },
+                {
+                    "text": "At x = −0.5",
+                    "isCorrect": true,
+                    "feedback": "Correct! The vertex is always halfway between the roots."
+                },
+                {
+                    "text": "At x = 0",
+                    "isCorrect": false,
+                    "feedback": "Close! The midpoint of 2 and −3 is (2 + (−3))/2 = −0.5"
+                }
+            ]
+        }
+    ],
+    "prerequisites": [
+        "addition",
+        "subtraction",
+        "multiplication",
+        "division",
+        "order_of_operations"
+    ],
+    "examples": [
+        {
+            "equation": "x² = 16",
+            "difficulty": "beginner",
+            "description": "Simplest quadratic—a squared variable equals a number.",
+            "missionStatement": {
+                "before": "x² = 16",
+                "after": "x = ?",
+                "narrative": "What number times itself gives 16? Remember: there might be two answers!"
+            },
+            "steps": [
+                {
+                    "stepNumber": 1,
+                    "action": "Understand the question",
+                    "reasoning": {
+                        "brief": "x × x = 16",
+                        "detailed": "We need a number that, multiplied by itself, gives 16.",
+                        "metaphor": "What sized square has area 16?"
+                    },
+                    "transformation": {
+                        "before": "x² = 16",
+                        "operation": "interpret",
+                        "after": "x × x = 16",
+                        "animation": "expand_square"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 2,
+                    "action": "Consider positive solution",
+                    "reasoning": {
+                        "brief": "4 × 4 = 16",
+                        "detailed": "4 squared is 16, so x could be 4.",
+                        "metaphor": "A 4×4 square has area 16."
+                    },
+                    "transformation": {
+                        "before": "x² = 16",
+                        "operation": "square root",
+                        "after": "x = 4 ✓",
+                        "animation": "reveal_positive"
+                    },
+                    "arithmeticConceptUsed": null
+                },
+                {
+                    "stepNumber": 3,
+                    "action": "Consider negative solution",
+                    "reasoning": {
+                        "brief": "(−4) × (−4) = 16 too!",
+                        "detailed": "Negative times negative is positive. So −4 squared also equals 16.",
+                        "metaphor": "Surprise! Two answers exist."
+                    },
+                    "transformation": {
+                        "before": "x = 4",
+                        "operation": "consider negative",
+                        "after": "x = 4 or x = −4",
+                        "animation": "reveal_negative"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                }
+            ]
+        },
+        {
+            "equation": "x² = 25",
+            "difficulty": "beginner",
+            "description": "Another simple squared variable—reinforces two solutions concept.",
+            "missionStatement": {
+                "before": "x² = 25",
+                "after": "x = ?",
+                "narrative": "Two numbers square to 25. Find them both."
+            },
+            "steps": [
+                {
+                    "stepNumber": 1,
+                    "action": "Find the square root",
+                    "reasoning": {
+                        "brief": "√25 = 5",
+                        "detailed": "5 × 5 = 25, so 5 is one answer.",
+                        "metaphor": "What number squared gives 25?"
+                    },
+                    "transformation": {
+                        "before": "x² = 25",
+                        "operation": "square root",
+                        "after": "x = 5",
+                        "animation": "reveal_positive"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 2,
+                    "action": "Don't forget the negative",
+                    "reasoning": {
+                        "brief": "(−5)² = 25 also",
+                        "detailed": "Negative times negative equals positive. (−5)(−5) = 25.",
+                        "metaphor": "Both +5 and −5 give 25 when squared."
+                    },
+                    "transformation": {
+                        "before": "x = 5",
+                        "operation": "include negative",
+                        "after": "x = 5 or x = −5",
+                        "animation": "reveal_negative"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                }
+            ]
+        },
+        {
+            "equation": "x² − 9 = 0",
+            "difficulty": "beginner",
+            "description": "Difference of squares pattern.",
+            "missionStatement": {
+                "before": "x² − 9 = 0",
+                "after": "x = ?",
+                "narrative": "A classic pattern: x squared minus a perfect square."
+            },
+            "steps": [
+                {
+                    "stepNumber": 1,
+                    "action": "Rearrange to isolate x²",
+                    "reasoning": {
+                        "brief": "Add 9 to both sides",
+                        "detailed": "Move the 9 to get x² alone.",
+                        "metaphor": "Get x² by itself first."
+                    },
+                    "transformation": {
+                        "before": "x² − 9 = 0",
+                        "operation": "add 9",
+                        "after": "x² = 9",
+                        "animation": "balance_add"
+                    },
+                    "arithmeticConceptUsed": "addition"
+                },
+                {
+                    "stepNumber": 2,
+                    "action": "Take square root of both sides",
+                    "reasoning": {
+                        "brief": "√9 = 3",
+                        "detailed": "Remember: both positive and negative!",
+                        "metaphor": "What times itself gives 9?"
+                    },
+                    "transformation": {
+                        "before": "x² = 9",
+                        "operation": "square root",
+                        "after": "x = 3 or x = −3",
+                        "animation": "split_solutions"
+                    },
+                    "arithmeticConceptUsed": null
+                }
+            ]
+        },
+        {
+            "equation": "x² − 4x = 0",
+            "difficulty": "intermediate",
+            "description": "Factoring out a common term.",
+            "missionStatement": {
+                "before": "x² − 4x = 0",
+                "after": "x = ?",
+                "narrative": "x appears in both terms. Factor it out!"
+            },
+            "steps": [
+                {
+                    "stepNumber": 1,
+                    "action": "Spot the common factor",
+                    "reasoning": {
+                        "brief": "Both terms have x",
+                        "detailed": "x² = x·x and 4x = 4·x. They share x as a factor.",
+                        "metaphor": "x is hiding in both terms."
+                    },
+                    "transformation": {
+                        "before": "x² − 4x = 0",
+                        "operation": "identify",
+                        "after": "x·x − 4·x = 0",
+                        "animation": "highlight_common"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 2,
+                    "action": "Factor out x",
+                    "reasoning": {
+                        "brief": "x(x − 4) = 0",
+                        "detailed": "Pull out the common x. What remains is (x − 4).",
+                        "metaphor": "Extract x from both terms."
+                    },
+                    "transformation": {
+                        "before": "x² − 4x = 0",
+                        "operation": "factor",
+                        "after": "x(x − 4) = 0",
+                        "animation": "factor_out"
+                    },
+                    "arithmeticConceptUsed": "division"
+                },
+                {
+                    "stepNumber": 3,
+                    "action": "Apply zero product property",
+                    "reasoning": {
+                        "brief": "If A × B = 0, then A = 0 or B = 0",
+                        "detailed": "For a product to be zero, one factor must be zero.",
+                        "metaphor": "One of these must be zero!"
+                    },
+                    "transformation": {
+                        "before": "x(x − 4) = 0",
+                        "operation": "zero product",
+                        "after": "x = 0 or x − 4 = 0",
+                        "animation": "split_factors"
+                    },
+                    "arithmeticConceptUsed": null
+                },
+                {
+                    "stepNumber": 4,
+                    "action": "Solve each equation",
+                    "reasoning": {
+                        "brief": "x = 0 or x = 4",
+                        "detailed": "First equation: x = 0 directly. Second: add 4 to get x = 4.",
+                        "metaphor": "Two possible values for x."
+                    },
+                    "transformation": {
+                        "before": "x = 0 or x − 4 = 0",
+                        "operation": "solve",
+                        "after": "x = 0 or x = 4",
+                        "animation": "reveal_solutions"
+                    },
+                    "arithmeticConceptUsed": "addition"
+                }
+            ]
+        },
+        {
+            "equation": "x² + 5x + 6 = 0",
+            "difficulty": "intermediate",
+            "description": "Standard quadratic that can be factored.",
+            "missionStatement": {
+                "before": "x² + 5x + 6 = 0",
+                "after": "x = ?",
+                "narrative": "Find two numbers that add to 5 and multiply to 6."
+            },
+            "factoringPuzzle": {
+                "target_sum": 5,
+                "target_product": 6,
+                "available_numbers": [
+                    1,
+                    2,
+                    3,
+                    6
+                ],
+                "correct_pair": [
+                    2,
+                    3
+                ],
+                "hint": "Which pair adds to 5?"
+            },
+            "steps": [
+                {
+                    "stepNumber": 1,
+                    "action": "Set up the factoring puzzle",
+                    "reasoning": {
+                        "brief": "Find two numbers",
+                        "detailed": "We need numbers that ADD to 5 (middle coefficient) and MULTIPLY to 6 (constant).",
+                        "metaphor": "A puzzle with two clues."
+                    },
+                    "transformation": {
+                        "before": "x² + 5x + 6 = 0",
+                        "operation": "setup puzzle",
+                        "after": "Need: sum = 5, product = 6",
+                        "animation": "show_puzzle"
+                    },
+                    "arithmeticConceptUsed": null
+                },
+                {
+                    "stepNumber": 2,
+                    "action": "Find the magic numbers",
+                    "reasoning": {
+                        "brief": "2 and 3 work!",
+                        "detailed": "2 + 3 = 5 ✓ and 2 × 3 = 6 ✓",
+                        "metaphor": "The puzzle pieces fit!"
+                    },
+                    "transformation": {
+                        "before": "Need: sum = 5, product = 6",
+                        "operation": "find numbers",
+                        "after": "Numbers: 2 and 3",
+                        "animation": "numbers_found"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 3,
+                    "action": "Write factored form",
+                    "reasoning": {
+                        "brief": "(x + 2)(x + 3) = 0",
+                        "detailed": "The numbers go in the parentheses with x.",
+                        "metaphor": "Build two factors."
+                    },
+                    "transformation": {
+                        "before": "x² + 5x + 6 = 0",
+                        "operation": "factor",
+                        "after": "(x + 2)(x + 3) = 0",
+                        "animation": "build_factors"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 4,
+                    "action": "Apply zero product property",
+                    "reasoning": {
+                        "brief": "One factor must equal zero",
+                        "detailed": "If (x + 2)(x + 3) = 0, either x + 2 = 0 or x + 3 = 0.",
+                        "metaphor": "Set each factor to zero."
+                    },
+                    "transformation": {
+                        "before": "(x + 2)(x + 3) = 0",
+                        "operation": "zero product",
+                        "after": "x + 2 = 0 or x + 3 = 0",
+                        "animation": "split_factors"
+                    },
+                    "arithmeticConceptUsed": null
+                },
+                {
+                    "stepNumber": 5,
+                    "action": "Solve each equation",
+                    "reasoning": {
+                        "brief": "x = −2 or x = −3",
+                        "detailed": "Subtract 2 from first, subtract 3 from second.",
+                        "metaphor": "Two solutions emerge!"
+                    },
+                    "transformation": {
+                        "before": "x + 2 = 0 or x + 3 = 0",
+                        "operation": "solve",
+                        "after": "x = −2 or x = −3",
+                        "animation": "reveal_solutions"
+                    },
+                    "arithmeticConceptUsed": "subtraction"
+                }
+            ]
+        },
+        {
+            "equation": "x² − 7x + 12 = 0",
+            "difficulty": "intermediate",
+            "description": "Quadratic with negative middle term.",
+            "missionStatement": {
+                "before": "x² − 7x + 12 = 0",
+                "after": "x = ?",
+                "narrative": "Negative sum means both numbers are negative."
+            },
+            "factoringPuzzle": {
+                "target_sum": -7,
+                "target_product": 12,
+                "available_numbers": [
+                    -1,
+                    -2,
+                    -3,
+                    -4,
+                    -6,
+                    -12
+                ],
+                "correct_pair": [
+                    -3,
+                    -4
+                ],
+                "hint": "Two negative numbers that add to −7"
+            },
+            "steps": [
+                {
+                    "stepNumber": 1,
+                    "action": "Set up the puzzle",
+                    "reasoning": {
+                        "brief": "Sum = −7, Product = 12",
+                        "detailed": "Negative sum with positive product means both numbers are negative.",
+                        "metaphor": "Both clues point to negatives."
+                    },
+                    "transformation": {
+                        "before": "x² − 7x + 12 = 0",
+                        "operation": "setup",
+                        "after": "Need: sum = −7, product = 12",
+                        "animation": "show_puzzle"
+                    },
+                    "arithmeticConceptUsed": null
+                },
+                {
+                    "stepNumber": 2,
+                    "action": "Find the numbers",
+                    "reasoning": {
+                        "brief": "−3 and −4",
+                        "detailed": "(−3) + (−4) = −7 ✓ and (−3)(−4) = 12 ✓",
+                        "metaphor": "Negative × negative = positive!"
+                    },
+                    "transformation": {
+                        "before": "Need: sum = −7, product = 12",
+                        "operation": "find",
+                        "after": "Numbers: −3 and −4",
+                        "animation": "numbers_found"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 3,
+                    "action": "Factor",
+                    "reasoning": {
+                        "brief": "(x − 3)(x − 4) = 0",
+                        "detailed": "Use the numbers found.",
+                        "metaphor": "Assemble the factors."
+                    },
+                    "transformation": {
+                        "before": "x² − 7x + 12 = 0",
+                        "operation": "factor",
+                        "after": "(x − 3)(x − 4) = 0",
+                        "animation": "build_factors"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 4,
+                    "action": "Solve",
+                    "reasoning": {
+                        "brief": "x = 3 or x = 4",
+                        "detailed": "Set each factor to zero and solve.",
+                        "metaphor": "Both solutions are positive!"
+                    },
+                    "transformation": {
+                        "before": "(x − 3)(x − 4) = 0",
+                        "operation": "solve",
+                        "after": "x = 3 or x = 4",
+                        "animation": "reveal_solutions"
+                    },
+                    "arithmeticConceptUsed": "addition"
+                }
+            ]
+        },
+        {
+            "equation": "x² − 2x − 8 = 0",
+            "difficulty": "advanced",
+            "description": "Mixed signs factoring.",
+            "missionStatement": {
+                "before": "x² − 2x − 8 = 0",
+                "after": "x = ?",
+                "narrative": "Negative product means one positive, one negative number."
+            },
+            "factoringPuzzle": {
+                "target_sum": -2,
+                "target_product": -8,
+                "available_numbers": [
+                    -4,
+                    -2,
+                    -1,
+                    1,
+                    2,
+                    4,
+                    8,
+                    -8
+                ],
+                "correct_pair": [
+                    2,
+                    -4
+                ],
+                "hint": "One positive, one negative (product is negative)"
+            },
+            "steps": [
+                {
+                    "stepNumber": 1,
+                    "action": "Analyze the signs",
+                    "reasoning": {
+                        "brief": "Sum = −2, Product = −8",
+                        "detailed": "Negative product means mixed signs. The larger one is negative (sum is negative).",
+                        "metaphor": "One plus, one minus, minus wins."
+                    },
+                    "transformation": {
+                        "before": "x² − 2x − 8 = 0",
+                        "operation": "analyze",
+                        "after": "Need: one +, one −, larger is −",
+                        "animation": "show_puzzle"
+                    },
+                    "arithmeticConceptUsed": null
+                },
+                {
+                    "stepNumber": 2,
+                    "action": "Find the numbers",
+                    "reasoning": {
+                        "brief": "2 and −4",
+                        "detailed": "2 + (−4) = −2 ✓ and 2 × (−4) = −8 ✓",
+                        "metaphor": "The puzzle fits!"
+                    },
+                    "transformation": {
+                        "before": "Need: sum = −2, product = −8",
+                        "operation": "find",
+                        "after": "Numbers: 2 and −4",
+                        "animation": "numbers_found"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 3,
+                    "action": "Factor",
+                    "reasoning": {
+                        "brief": "(x + 2)(x − 4) = 0",
+                        "detailed": "One factor has +2, other has −4.",
+                        "metaphor": "Build the factors carefully."
+                    },
+                    "transformation": {
+                        "before": "x² − 2x − 8 = 0",
+                        "operation": "factor",
+                        "after": "(x + 2)(x − 4) = 0",
+                        "animation": "build_factors"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 4,
+                    "action": "Solve",
+                    "reasoning": {
+                        "brief": "x = −2 or x = 4",
+                        "detailed": "One solution negative, one positive.",
+                        "metaphor": "Mixed sign answers from mixed sign factors."
+                    },
+                    "transformation": {
+                        "before": "(x + 2)(x − 4) = 0",
+                        "operation": "solve",
+                        "after": "x = −2 or x = 4",
+                        "animation": "reveal_solutions"
+                    },
+                    "arithmeticConceptUsed": "subtraction"
+                }
+            ]
+        },
+        {
+            "equation": "x² + 6x + 9 = 0",
+            "difficulty": "advanced",
+            "description": "Perfect square trinomial.",
+            "missionStatement": {
+                "before": "x² + 6x + 9 = 0",
+                "after": "x = ?",
+                "narrative": "A special pattern—the factors are identical!"
+            },
+            "steps": [
+                {
+                    "stepNumber": 1,
+                    "action": "Recognize the pattern",
+                    "reasoning": {
+                        "brief": "9 = 3², and 6 = 2×3",
+                        "detailed": "This matches (x + a)² = x² + 2ax + a² with a = 3.",
+                        "metaphor": "A perfect square in disguise!"
+                    },
+                    "transformation": {
+                        "before": "x² + 6x + 9 = 0",
+                        "operation": "recognize",
+                        "after": "Pattern: (x + 3)²",
+                        "animation": "reveal_pattern"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 2,
+                    "action": "Write as a perfect square",
+                    "reasoning": {
+                        "brief": "(x + 3)² = 0",
+                        "detailed": "Both factors are the same: (x + 3)(x + 3).",
+                        "metaphor": "Identical twins!"
+                    },
+                    "transformation": {
+                        "before": "x² + 6x + 9 = 0",
+                        "operation": "factor",
+                        "after": "(x + 3)² = 0",
+                        "animation": "collapse_to_square"
+                    },
+                    "arithmeticConceptUsed": "multiplication"
+                },
+                {
+                    "stepNumber": 3,
+                    "action": "Solve",
+                    "reasoning": {
+                        "brief": "Only one unique solution",
+                        "detailed": "For a square to equal zero, its base must be zero: x + 3 = 0, so x = −3.",
+                        "metaphor": "Both factors give the same answer!"
+                    },
+                    "transformation": {
+                        "before": "(x + 3)² = 0",
+                        "operation": "solve",
+                        "after": "x = −3 (double root)",
+                        "animation": "single_solution"
+                    },
+                    "arithmeticConceptUsed": "subtraction"
+                }
+            ]
+        }
+    ],
+    "arAvailable": true
+}

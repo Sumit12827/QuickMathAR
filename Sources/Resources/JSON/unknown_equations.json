@@ -1,0 +1,44 @@
+{
+    "version": "1.0",
+    "equationType": "unknown",
+    "displayName": "Unrecognized Equation",
+    "explanation": "Some equations don't fit into the categories we can recognize and explain step by step. This doesn't mean there's anything wrong—mathematics includes many types of equations, and our app currently focuses on teaching linear equations (like 2x + 5 = 12) and quadratic equations (like x² + 3x + 2 = 0). Your equation might involve more advanced concepts that we haven't covered yet.",
+    "encouragement": "Not being able to classify an equation is actually a great learning moment! It means you've encountered something new. Mathematics is full of different types of equations—trigonometric equations, exponential equations, systems of equations, and more. Each type has its own patterns and solving methods. The best way to prepare for these is to make sure you have a strong foundation in the basics. If you understand addition, subtraction, multiplication, and division deeply, and if you understand how linear and quadratic equations work, you'll be well-prepared to learn new types when you encounter them.",
+    "suggestedFoundations": [
+        "addition",
+        "subtraction",
+        "multiplication",
+        "division",
+        "order_of_operations"
+    ],
+    "reasonsForUnknown": [
+        {
+            "reason": "Higher-degree polynomials",
+            "explanation": "Equations with x³, x⁴, or higher powers use more advanced techniques."
+        },
+        {
+            "reason": "Trigonometric functions",
+            "explanation": "Equations with sin, cos, tan require understanding of angles and periodic functions."
+        },
+        {
+            "reason": "Exponential or logarithmic",
+            "explanation": "Equations where x appears as an exponent (like 2ˣ = 8) use different rules."
+        },
+        {
+            "reason": "Multiple variables",
+            "explanation": "Systems with more than one unknown (like x and y together) need simultaneous solving."
+        },
+        {
+            "reason": "Unclear or incomplete input",
+            "explanation": "Sometimes the camera couldn't capture the full equation clearly. Try scanning again!"
+        }
+    ],
+    "nextSteps": [
+        "Review the foundational arithmetic concepts to strengthen your base.",
+        "Practice with linear equations until they feel natural.",
+        "Explore quadratic equations to understand how squared terms work.",
+        "Try scanning the equation again with better lighting or a clearer image.",
+        "Ask a teacher or tutor about the specific type of equation you've encountered."
+    ],
+    "arAvailable": false
+}
