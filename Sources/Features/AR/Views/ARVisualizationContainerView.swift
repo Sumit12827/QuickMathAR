@@ -116,33 +116,45 @@ public struct ARVisualizationContainerView: View {
     // MARK: - Setup Screen
     
     private var setupScreen: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Header
-                headerSection
-                
-                // Equation display with live update
-                equationDisplayCard
-                
-                // Parameter controls
-                parameterControlsSection
-                
-                // 2D Preview
-                previewSection
-                
-                // AR Instructions
-                arInstructionsCard
-                
-                // Launch AR button
-                launchARButton
-                
-                // Skip option
-                skipToReflectionButton
-                
-                Spacer(minLength: 40)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Header
+                    headerSection
+                    
+                    // Equation display with live update
+                    equationDisplayCard
+                    
+                    // Parameter controls
+                    parameterControlsSection
+                    
+                    // 2D Preview
+                    previewSection
+                    
+                    // AR Instructions
+                    arInstructionsCard
+                    
+                    Spacer(minLength: 20)
+                }
+                .padding(.horizontal, horizontalSizeClass == .regular ? 48 : 20)
+                .padding(.top, 24)
             }
-            .padding(.horizontal, horizontalSizeClass == .regular ? 48 : 20)
-            .padding(.top, 24)
+            
+            // Fixed bottom action bar — AR launch always visible
+            FixedBottomActionBar(accentColor: accentColor) {
+                HStack(spacing: 10) {
+                    Image(systemName: "arkit")
+                        .font(.title3)
+                    Text("Place in Your Space")
+                }
+            } primaryAction: {
+                showARView = true
+            } secondaryLabel: {
+                Text("Jump to Takeaways")
+            } secondaryAction: {
+                let insights = generateInsights()
+                navigationCoordinator.push(.reflection(equationType: equationType, insights: insights))
+            }
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("AR Visualization")
@@ -352,65 +364,7 @@ public struct ARVisualizationContainerView: View {
         )
     }
     
-    // MARK: - Launch AR Button
-    
-    private var launchARButton: some View {
-        Button {
-            showARView = true
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "arkit")
-                    .font(.title2)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Enter AR Mode")
-                        .font(.headline)
-                    
-                    Text("Place the graph in your space")
-                        .font(.caption)
-                        .opacity(0.8)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
-            }
-            .foregroundStyle(.white)
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [accentColor, accentColor.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            )
-            .shadow(color: accentColor.opacity(0.3), radius: 12, y: 6)
-        }
-        .buttonStyle(.plain)
-        .frame(maxWidth: 400)
-        .accessibilityLabel("Enter AR mode")
-        .accessibilityHint("Opens augmented reality view to place the graph in your space")
-    }
-
-    // MARK: - Skip Button
-    
-    private var skipToReflectionButton: some View {
-        Button {
-            let insights = generateInsights()
-            navigationCoordinator.push(.reflection(equationType: equationType, insights: insights))
-        } label: {
-            Text("Skip to Key Takeaways")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Skip to key takeaways")
-        .accessibilityHint("Skips AR visualization and shows learning summary")
-    }
+    // MARK: - Launch AR Button & Skip (moved to fixed bottom bar in setupScreen)
     
     // MARK: - Helpers
     

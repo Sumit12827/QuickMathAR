@@ -55,6 +55,10 @@ struct HomeView: View {
             Spacer()
 
             headerSection
+            
+            // Journey steps indicator
+            journeySteps
+                .opacity(headerOpacity)
 
             Spacer()
 
@@ -94,16 +98,29 @@ struct HomeView: View {
     // MARK: - Components
     private var headerSection: some View {
         VStack(spacing: 16) {
-            Image(systemName: "brain.head.profile")
-                .font(.system(size: 80))
-                .foregroundStyle(Color.accentColor)
+            // App icon with gradient background
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.accentColor.opacity(0.15), Color.accentColor.opacity(0.05)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 120, height: 120)
+                
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 56))
+                    .foregroundStyle(Color.accentColor)
+            }
 
             Text("Quick Maths AR")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .safeTitle(minScale: 0.8)
 
-            Text("Understand math visually, not just solve it")
+            Text("Build it. Understand it. See it in AR.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .safeBody()
@@ -111,6 +128,37 @@ struct HomeView: View {
         }
         .opacity(headerOpacity)
         .scaleEffect(headerScale)
+    }
+    
+    // MARK: - Journey Steps
+    private var journeySteps: some View {
+        HStack(spacing: 0) {
+            JourneyStepPill(icon: "hammer.fill", label: "Build", color: .blue)
+            
+            Image(systemName: "chevron.right")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            
+            JourneyStepPill(icon: "lightbulb.fill", label: "Learn", color: .yellow)
+            
+            Image(systemName: "chevron.right")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            
+            JourneyStepPill(icon: "arkit", label: "Visualize", color: .green)
+            
+            Image(systemName: "chevron.right")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            
+            JourneyStepPill(icon: "checkmark.circle.fill", label: "Reflect", color: .orange)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemBackground))
+        )
     }
 
     // MARK: - Animation (Spec: staggered spring cascade)
@@ -132,24 +180,37 @@ struct HomeView: View {
             HapticManager.shared.tap()
             navigationCoordinator.push(.equationInput)
         } label: {
-            VStack(spacing: AppMetrics.spacingMicro) {
+            HStack(spacing: 12) {
                 Image(systemName: "plus.square.fill.on.square.fill")
-                    .font(.system(size: 36))
-                    .foregroundStyle(Color.accentColor)
-
-                Text("Build an Equation")
+                    .font(.title2)
+                
+                Text("Start Building")
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                Image(systemName: "arrow.right")
+                    .font(.subheadline.weight(.semibold))
             }
+            .foregroundStyle(.white)
+            .padding(18)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, AppMetrics.spacingLarge)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: AppMetrics.cornerRadiusMedium))
+            .background(
+                RoundedRectangle(cornerRadius: AppMetrics.cornerRadiusMedium)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .shadow(color: Color.accentColor.opacity(0.25), radius: 10, y: 5)
         }
         .buttonStyle(.plain)
         .pressable()
         .frame(maxWidth: 400)
-        .accessibilityLabel("Build an equation")
+        .accessibilityLabel("Start building an equation")
         .accessibilityHint("Opens interactive equation builder")
     }
     
@@ -181,6 +242,29 @@ struct HomeView: View {
         }
         .accessibilityLabel("Settings")
         .accessibilityHint("Open app settings")
+    }
+}
+
+// MARK: - Journey Step Pill
+
+private struct JourneyStepPill: View {
+    let icon: String
+    let label: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2)
+                .foregroundStyle(color)
+            
+            Text(label)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
     }
 }
 

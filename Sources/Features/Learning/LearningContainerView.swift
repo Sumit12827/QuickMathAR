@@ -60,42 +60,68 @@ public struct LearningContainerView: View {
     // MARK: - Body
 
     public var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                if let content = content {
-                    // Header
-                    headerSection
-                    
-                    // Interactive slope/coefficient demo
-                    if equationType == .linear || equationType == .quadratic {
-                        interactiveSliderSection
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    if let content = content {
+                        // Header
+                        headerSection
+                        
+                        // Interactive slope/coefficient demo
+                        if equationType == .linear || equationType == .quadratic {
+                            interactiveSliderSection
+                        }
+                        
+                        // Prediction question (appears mid-learning)
+                        if showPredictionQuestion {
+                            predictionQuestionCard
+                        }
+                        
+                        // Main learning content
+                        mainLearningContent(content: content)
+                        
+                        // Completion success message (inline, not the CTA)
+                        if hasCompletedExample {
+                            completionMessage
+                        }
+                        
+                    } else if isLoading {
+                        // Loading state
+                        loadingView
+                    } else {
+                        // Error state - content failed to load
+                        errorView
                     }
                     
-                    // Prediction question (appears mid-learning)
-                    if showPredictionQuestion {
-                        predictionQuestionCard
-                    }
-                    
-                    // Main learning content
-                    mainLearningContent(content: content)
-                    
-                    // Completion section
-                    if hasCompletedExample {
-                        completionSection
-                    }
-                    
-                } else if isLoading {
-                    // Loading state
-                    loadingView
-                } else {
-                    // Error state - content failed to load
-                    errorView
+                    Spacer(minLength: 20)
                 }
-                
-                Spacer(minLength: 40)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.top, 24)
             }
-            .padding(.horizontal, horizontalPadding)
-            .padding(.top, 24)
+            
+            // Fixed bottom action bar — always visible when content loaded
+            if content != nil {
+                FixedBottomActionBar(accentColor: accentColor) {
+                    HStack(spacing: 8) {
+                        Image(systemName: hasCompletedExample ? "arkit" : "sparkles")
+                        Text(hasCompletedExample ? "See It in AR" : "Explore the examples above")
+                    }
+                } primaryAction: {
+                    if hasCompletedExample {
+                        navigationCoordinator.push(.arVisualization(equation: equation, type: equationType))
+                    } else {
+                        // Mark as completed to unlock AR
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            hasCompletedExample = true
+                        }
+                    }
+                } secondaryLabel: {
+                    Text("Jump to Takeaways")
+                } secondaryAction: {
+                    let insights = generateInsights()
+                    navigationCoordinator.push(.reflection(equationType: equationType, insights: insights))
+                }
+            }
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Learning Examples")
@@ -414,73 +440,28 @@ public struct LearningContainerView: View {
         }
     }
     
-    // MARK: - Completion Section
+    // MARK: - Completion Message (inline, not the CTA)
     
-    private var completionSection: some View {
-        VStack(spacing: 16) {
-            // Success message
-            HStack(spacing: 12) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title)
-                    .foregroundStyle(.green)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Great Progress!")
-                        .font(.headline)
-                    Text("You've explored the interactive example")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color.green.opacity(0.1))
-            )
+    private var completionMessage: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.title)
+                .foregroundStyle(.green)
             
-            // Action buttons
-            VStack(spacing: 12) {
-                // Primary: Visualize in AR
-                Button {
-                    HapticManager.shared.medium()
-                    navigationCoordinator.push(.arVisualization(equation: equation, type: equationType))
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "arkit")
-                        Text("Visualize in AR")
-                    }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Great Progress!")
                     .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(accentColor)
-                    )
-                    .shadow(color: accentColor.opacity(0.3), radius: 8, y: 4)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Visualize in AR")
-                .accessibilityHint("Opens augmented reality view of the equation")
-
-                // Secondary: Skip to Reflection
-                Button {
-                    HapticManager.shared.light()
-                    let insights = generateInsights()
-                    navigationCoordinator.push(.reflection(equationType: equationType, insights: insights))
-                } label: {
-                    Text("Skip to Key Takeaways")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Skip to key takeaways")
-                .accessibilityHint("Skips to the learning summary")
+                Text("You've explored the interactive example")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: 400)
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.green.opacity(0.1))
+        )
     }
     
     // MARK: - Loading View

@@ -26,7 +26,7 @@ struct SettingsView: View {
     var body: some View {
         List {
             inputPreferencesSection
-            learningSection
+         //   learningSection
             appInfoSection
         }
         .navigationTitle("Settings")
@@ -51,17 +51,17 @@ struct SettingsView: View {
         }
     }
 
-    private var learningSection: some View {
-        Section {
-            Toggle("Remember last equation type", isOn: $rememberLastType)
-            Toggle("Show tips and hints", isOn: $showHints)
-        } header: {
-            Text("Learning")
-        } footer: {
-            Text("Tips help you understand concepts better as you learn.")
-                .font(.caption)
-        }
-    }
+//    private var learningSection: some View {
+//        Section {
+//            Toggle("Remember last equation type", isOn: $rememberLastType)
+//            Toggle("Show tips and hints", isOn: $showHints)
+//        } header: {
+//            Text("Learning")
+//        } footer: {
+//            Text("Tips help you understand concepts better as you learn.")
+//                .font(.caption)
+//        }
+//    }
     
     private var appInfoSection: some View {
         Section {

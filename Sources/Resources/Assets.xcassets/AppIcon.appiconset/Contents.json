@@ -1,13 +1,14 @@
 {
-    "images": [
-        {
-            "idiom": "universal",
-            "platform": "ios",
-            "size": "1024x1024"
-        }
-    ],
-    "info": {
-        "author": "xcode",
-        "version": 1
+  "images" : [
+    {
+      "filename" : "ChatGPT Image Feb 17, 2026 at 12_08_04 PM.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
     }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
 }

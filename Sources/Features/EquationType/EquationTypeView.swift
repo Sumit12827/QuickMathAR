@@ -241,20 +241,50 @@ struct EquationTypeView: View {
     
     private var supportedEquationActions: some View {
         VStack(spacing: 16) {
-            // Question prompt
-            Text("What would you like to do?")
-                .font(.headline)
-                .foregroundStyle(.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // Step indicator
+            HStack(spacing: 6) {
+                Text("Your learning path")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                Text("Step 1 of 4")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(Color(.tertiarySystemGroupedBackground))
+                    )
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             
-            // Option 1: Understand the concept
-            LearningPathButton(
-                title: "Understand the Concept",
-                subtitle: "Learn what this means intuitively",
-                icon: "lightbulb.fill",
-                color: .yellow
-            ) {
-                navigationCoordinator.push(.conceptExplanation(equation: equation, type: equationType))
+            // Option 1: Understand the concept (RECOMMENDED)
+            ZStack(alignment: .topTrailing) {
+                LearningPathButton(
+                    title: "Understand the Concept",
+                    subtitle: "Start here — learn what this means intuitively",
+                    icon: "lightbulb.fill",
+                    color: .yellow
+                ) {
+                    navigationCoordinator.push(.conceptExplanation(equation: equation, type: equationType))
+                }
+                
+                // Recommended badge
+                Text("Recommended")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(Color.orange)
+                    )
+                    .offset(x: -8, y: -6)
             }
             
             // Option 2: Learn with examples

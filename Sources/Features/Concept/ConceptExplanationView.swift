@@ -53,7 +53,7 @@ public struct ConceptExplanationView: View {
     // MARK: - Body
 
     public var body: some View {
-        GeometryReader { geometry in
+        VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     // Header with equation
@@ -81,19 +81,31 @@ public struct ConceptExplanationView: View {
                             visualCard
                         }
                     }
-
-                    // Continue button
-                    continueSection
-                        .padding(.top, 8)
-
-                    Spacer(minLength: 40)
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, 16)
                 .padding(.bottom, 24)
             }
-            .background(Color(.systemGroupedBackground))
+
+            // Fixed bottom action bar — always visible
+            FixedBottomActionBar(accentColor: accentColor) {
+                HStack(spacing: 8) {
+                    Text("See It Step by Step")
+                    Image(systemName: "arrow.right")
+                        .font(.subheadline.weight(.semibold))
+                }
+            } primaryAction: {
+                navigationCoordinator.push(.learning(equation: equation, type: equationType))
+            } secondaryLabel: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arkit")
+                    Text("Skip to AR")
+                }
+            } secondaryAction: {
+                navigationCoordinator.push(.arVisualization(equation: equation, type: equationType))
+            }
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("The Concept")
         .navigationBarTitleDisplayMode(.large)
     }
@@ -372,55 +384,7 @@ public struct ConceptExplanationView: View {
         }
     }
     
-    // MARK: - Continue Section
-
-    private var continueSection: some View {
-        VStack(spacing: 12) {
-            // Primary: Continue to examples
-            Button {
-                HapticManager.shared.medium()
-                navigationCoordinator.push(.learning(equation: equation, type: equationType))
-            } label: {
-                HStack(spacing: 8) {
-                    Text("Continue to Examples")
-                        .font(.headline)
-                    Image(systemName: "arrow.right")
-                        .font(.subheadline.weight(.semibold))
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(accentColor)
-                )
-                .shadow(color: accentColor.opacity(0.3), radius: 8, y: 4)
-            }
-            .buttonStyle(.plain)
-
-            // Secondary: Jump to AR
-            Button {
-                HapticManager.shared.light()
-                navigationCoordinator.push(.arVisualization(equation: equation, type: equationType))
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "arkit")
-                    Text("Or Visualize in AR")
-                }
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(accentColor)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(accentColor.opacity(0.3), lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-        }
-        .frame(maxWidth: 400)
-    }
+    // MARK: - Continue Section (moved to fixed bottom bar in body)
 }
 
 // MARK: - Concept Card Component
