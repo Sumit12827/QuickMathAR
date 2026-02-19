@@ -19,9 +19,13 @@ public struct ConceptExplanationView: View {
     /// The type of equation
     public let equationType: EquationType
     
-    public init(equation: String, equationType: EquationType) {
+    /// Optional pre-computed analysis from Screen 1
+    public let analysis: EquationAnalysis?
+    
+    public init(equation: String, equationType: EquationType, analysis: EquationAnalysis? = nil) {
         self.equation = equation
         self.equationType = equationType
+        self.analysis = analysis
     }
 
     
@@ -29,6 +33,14 @@ public struct ConceptExplanationView: View {
     
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    
+    // MARK: - State
+    
+    /// Fallback analyzer if no analysis was passed from Screen 1
+    @StateObject private var fallbackAnalyzer = EquationAnalyzer()
+    
+    /// Coefficient slider value for interactive exploration
+    @State private var coeffSliderValue: Double = 1.0
     
     // MARK: - Computed Properties
     
@@ -52,6 +64,17 @@ public struct ConceptExplanationView: View {
     
     // MARK: - Body
 
+    /// The effective analysis — from parameter or fallback
+    private var effectiveAnalysis: EquationAnalysis? {
+        if let analysis = analysis {
+            return analysis
+        }
+        if case .completed(let a) = fallbackAnalyzer.state {
+            return a
+        }
+        return nil
+    }
+    
     public var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
@@ -59,6 +82,14 @@ public struct ConceptExplanationView: View {
                     // Header with equation
                     headerSection
                         .padding(.bottom, 4)
+                    
+                    // Equation-specific AI insight (NEW)
+                    equationInsightCard
+                    
+                    // Interactive coefficient explorer (NEW)
+                    if effectiveAnalysis != nil {
+                        coefficientExplorerCard
+                    }
 
                     // Interactive concept flow (if available in content)
                     if let conceptFlow = content?.conceptFlow, !conceptFlow.isEmpty {
@@ -68,16 +99,9 @@ public struct ConceptExplanationView: View {
                     } else {
                         // Fallback to static cards
                         VStack(spacing: 16) {
-                            // What is it?
                             whatIsItCard
-
-                            // Real-world relevance
                             realWorldCard
-
-                            // Common confusion points
                             confusionCard
-
-                            // Visual representation
                             visualCard
                         }
                     }
@@ -106,8 +130,14 @@ public struct ConceptExplanationView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("The Concept")
+        .navigationTitle("Understand Visually")
         .navigationBarTitleDisplayMode(.large)
+        .onAppear {
+            // If no analysis was passed, run the analyzer
+            if analysis == nil {
+                fallbackAnalyzer.analyze(equation: equation, type: equationType)
+            }
+        }
     }
     
     // MARK: - Header Section
@@ -381,6 +411,206 @@ public struct ConceptExplanationView: View {
                 "Creates complex curves with multiple features",
                 "Shape depends on the equation's structure and coefficients"
             ]
+        }
+    }
+    
+    // MARK: - Equation Insight Card (NEW)
+    
+    private var equationInsightCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Header with AI badge
+            HStack(spacing: 8) {
+                Image(systemName: "brain.head.profile")
+                    .font(.body)
+                    .foregroundStyle(.purple)
+                
+                Text("About Your Equation")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.purple)
+                
+                Spacer()
+                
+                if isFoundationModelAvailable() {
+                    Label("Apple Intelligence", systemImage: "apple.intelligence")
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.purple.opacity(0.8))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule()
+                                .fill(.purple.opacity(0.1))
+                        )
+                }
+            }
+            
+            if let a = effectiveAnalysis {
+                // What this equation does
+                Text(a.whatThisEquationDoes)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .lineSpacing(3)
+                    .safeBody(alignment: .leading)
+                
+                // Real-world analogy
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "lightbulb.fill")
+                        .font(.caption)
+                        .foregroundStyle(.yellow)
+                        .frame(width: 20)
+                    
+                    Text(a.realWorldAnalogy)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .safeCaption(alignment: .leading)
+                }
+                
+                // Solution preview
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                    
+                    Text(a.solutionPreview)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                // Loading shimmer
+                VStack(alignment: .leading, spacing: 10) {
+                    ShimmerView(lineCount: 1)
+                        .frame(height: 16)
+                    ShimmerView(lineCount: 1)
+                        .frame(height: 16)
+                        .frame(maxWidth: 240)
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [.purple.opacity(0.4), .purple.opacity(0.15)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+    }
+    
+    // MARK: - Coefficient Explorer Card (NEW)
+    
+    private var coefficientExplorerCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Label {
+                Text("What do the numbers mean?")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+            } icon: {
+                Image(systemName: "slider.horizontal.3")
+                    .foregroundStyle(accentColor)
+            }
+            
+            if let a = effectiveAnalysis, !a.coefficients.isEmpty {
+                // Coefficient badges
+                HStack(spacing: 10) {
+                    ForEach(a.coefficients, id: \.symbol) { coeff in
+                        VStack(spacing: 4) {
+                            Text(coeff.symbol)
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(accentColor)
+                            
+                            Text(coeff.displayValue)
+                                .font(.system(.title3, design: .rounded))
+                                .fontWeight(.semibold)
+                            
+                            Text(coeff.meaning)
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(accentColor.opacity(0.06))
+                        )
+                    }
+                }
+                
+                // Interactive exploration
+                VStack(spacing: 10) {
+                    let param = equationType == .linear ? "slope" : "'a'"
+                    HStack {
+                        Text("Adjust \(param)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        
+                        Slider(value: $coeffSliderValue, in: -3...3, step: 0.5)
+                            .tint(accentColor)
+                        
+                        Text(String(format: "%.1f", coeffSliderValue))
+                            .font(.system(.caption, design: .monospaced))
+                            .fontWeight(.semibold)
+                            .foregroundStyle(accentColor)
+                            .frame(width: 40)
+                    }
+                    
+                    SimpleGraphPreview(equationType: equationType)
+                        .frame(height: 100)
+                    
+                    Text(coefficientExplorerInsight)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                )
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+    
+    private var coefficientExplorerInsight: String {
+        if equationType == .linear {
+            if coeffSliderValue > 1 {
+                return "A steep positive slope — the line rises quickly to the right."
+            } else if coeffSliderValue > 0 {
+                return "A gentle positive slope — the line rises slowly."
+            } else if coeffSliderValue == 0 {
+                return "Flat line — no change in y at all."
+            } else if coeffSliderValue > -1 {
+                return "A gentle negative slope — the line falls slowly."
+            } else {
+                return "A steep negative slope — the line drops quickly."
+            }
+        } else {
+            if coeffSliderValue > 0.5 {
+                return "Parabola opens upward (U-shape). Larger 'a' makes it narrower."
+            } else if coeffSliderValue > -0.5 {
+                return "Nearly flat — close to a straight line."
+            } else {
+                return "Parabola opens downward (∩-shape). More negative 'a' makes it narrower."
+            }
         }
     }
     

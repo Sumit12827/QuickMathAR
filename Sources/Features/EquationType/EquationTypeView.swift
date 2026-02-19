@@ -1,49 +1,33 @@
-//
-//  EquationTypeView.swift
-//  QuickMathsAR
-//
-//  Displays the detected equation and its classification
-//  Handles ALL equation types gracefully with educational UI
-//
 
 import SwiftUI
-
-/// View displaying the detected equation and its classified type
-/// Serves as a decision point where users choose their learning path
 struct EquationTypeView: View {
-    
-    // MARK: - Properties
-    
-    /// The detected equation string from OCR
     let equation: String
-    
-    /// The classified equation type
+     
     let equationType: EquationType
     
-    // MARK: - Environment
-
+    
+    
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-
-    // MARK: - Animation State
-
+    
+    
+    
+    @StateObject private var analyzer = EquationAnalyzer()
+    
     @State private var showEquation = false
-    @State private var showType = false
-    @State private var showConcept = false
+    @State private var showInsight = false
+    @State private var showProperties = false
     @State private var showButtons = false
     
-    // MARK: - Body
-    
+   
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Main content
                 contentSection
                     .padding(.top, 32)
                 
                 Spacer(minLength: 32)
                 
-                // Action buttons section
                 actionButtonsSection
                     .opacity(showButtons ? 1 : 0)
                     .padding(.bottom, 40)
@@ -55,35 +39,47 @@ struct EquationTypeView: View {
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
             animateAppearance()
+            analyzer.analyze(equation: equation, type: equationType)
         }
     }
     
-    // MARK: - Content Section
-
+   
+    
     private var contentSection: some View {
-        VStack(spacing: 32) {
-            // Equation display card
+        VStack(spacing: 24) {
+          
             equationCard
                 .opacity(showEquation ? 1 : 0)
                 .offset(y: showEquation ? 0 : 20)
-
-            // Type classification card
+            
+           
             typeCard
-                .opacity(showType ? 1 : 0)
-                .scaleEffect(showType ? 1 : 0.8)
-
-            // Contextual message
-            contextMessage
-                .opacity(showConcept ? 1 : 0)
-                .offset(y: showConcept ? 0 : 20)
+                .opacity(showEquation ? 1 : 0)
+                .scaleEffect(showEquation ? 1 : 0.95)
+            
+           
+            if equationType.isSupported {
+                aiInsightCard
+                    .opacity(showInsight ? 1 : 0)
+                    .offset(y: showInsight ? 0 : 16)
+                
+                
+                keyPropertiesGrid
+                    .opacity(showProperties ? 1 : 0)
+                    .offset(y: showProperties ? 0 : 16)
+            } else {
+               
+                contextMessage
+                    .opacity(showInsight ? 1 : 0)
+                    .offset(y: showInsight ? 0 : 20)
+            }
         }
     }
     
-    // MARK: - Equation Card
+
     
     private var equationCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Section header
             Label {
                 Text("Your Equation")
                     .font(.subheadline)
@@ -94,7 +90,6 @@ struct EquationTypeView: View {
                     .foregroundStyle(.secondary)
             }
             
-            // Equation display
             Text(equation)
                 .font(.system(size: 32, weight: .medium, design: .rounded))
                 .foregroundStyle(.primary)
@@ -117,7 +112,6 @@ struct EquationTypeView: View {
     
     private var typeCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Section header
             Label {
                 Text("Equation Type")
                     .font(.subheadline)
@@ -128,20 +122,17 @@ struct EquationTypeView: View {
                     .foregroundStyle(.secondary)
             }
             
-            // Type display
             HStack(spacing: 16) {
-                // Type icon
                 typeIcon
                     .frame(width: 56, height: 56)
                 
-                // Type information
                 VStack(alignment: .leading, spacing: 4) {
                     Text(equationType.displayName)
                         .font(.title2)
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
                         .safeTitle(minScale: 0.8, alignment: .leading)
-
+                    
                     Text(equationType.description)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -176,7 +167,7 @@ struct EquationTypeView: View {
         }
     }
     
-    /// Background color based on equation type
+   
     private var typeBackgroundColor: Color {
         switch equationType {
         case .linear: return .blue
@@ -194,8 +185,249 @@ struct EquationTypeView: View {
         case .unknown: return .red
         }
     }
+   
     
-    // MARK: - Context Message
+    private var aiInsightCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+         
+            HStack(spacing: 8) {
+                Image(systemName: "brain.head.profile")
+                    .font(.body)
+                    .foregroundStyle(.purple)
+                
+                Text("AI Insight")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.purple)
+                
+                Spacer()
+                
+                if isFoundationModelAvailable() {
+                    Label("Apple Intelligence", systemImage: "apple.intelligence")
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.purple.opacity(0.8))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule()
+                                .fill(.purple.opacity(0.1))
+                        )
+                }
+            }
+            
+            switch analyzer.state {
+            case .idle, .analyzing:
+               
+                VStack(alignment: .leading, spacing: 10) {
+                    ShimmerView(lineCount: 1)
+                        .frame(height: 16)
+                    ShimmerView(lineCount: 1)
+                        .frame(height: 16)
+                        .frame(maxWidth: 240)
+                    ShimmerView(lineCount: 1)
+                        .frame(height: 16)
+                        .frame(maxWidth: 180)
+                }
+                .padding(.vertical, 4)
+                
+            case .completed(let analysis):
+                VStack(alignment: .leading, spacing: 12) {
+                   
+                    Text(analysis.whatThisEquationDoes)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .safeBody(alignment: .leading)
+                    
+                   
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "lightbulb.fill")
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
+                            .frame(width: 20)
+                        
+                        Text(analysis.realWorldAnalogy)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .safeCaption(alignment: .leading)
+                    }
+            
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                        
+                        Text(analysis.solutionPreview)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+            case .failed:
+                Text("Analysis unavailable")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [.purple.opacity(0.4), .purple.opacity(0.15)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+    }
+    
+    // MARK: - Key Properties Grid
+    
+    private var keyPropertiesGrid: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                Text("Key Properties")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+            } icon: {
+                Image(systemName: "list.bullet.rectangle")
+                    .foregroundStyle(.secondary)
+            }
+            
+            if case .completed(let analysis) = analyzer.state {
+                // Coefficients row
+                if !analysis.coefficients.isEmpty {
+                    HStack(spacing: 12) {
+                        ForEach(analysis.coefficients, id: \.symbol) { coeff in
+                            coefficientBadge(coeff)
+                        }
+                    }
+                }
+                
+                // Key features grid (2 columns)
+                let columns = [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12)
+                ]
+                
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(analysis.keyFeatures, id: \.label) { feature in
+                        featureCell(feature)
+                    }
+                }
+                
+                // Graph orientation
+                HStack(spacing: 8) {
+                    Image(systemName: "chart.xyaxis.line")
+                        .font(.caption)
+                        .foregroundStyle(typeBackgroundColor)
+                    
+                    Text(analysis.graphOrientation)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 4)
+                
+            } else {
+                // Loading placeholder
+                HStack(spacing: 12) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        ShimmerView(lineCount: 1)
+                            .frame(height: 48)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(Color(.separator).opacity(0.3), lineWidth: 1)
+        )
+    }
+    
+    private func coefficientBadge(_ coeff: CoefficientInfo) -> some View {
+        VStack(spacing: 4) {
+            Text(coeff.symbol)
+                .font(.caption2)
+                .fontWeight(.bold)
+                .foregroundStyle(typeBackgroundColor)
+            
+            Text(coeff.displayValue)
+                .font(.system(.title3, design: .rounded))
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+            
+            Text(coeff.meaning)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(typeBackgroundColor.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(typeBackgroundColor.opacity(0.15), lineWidth: 1)
+        )
+    }
+    
+    private func featureCell(_ feature: KeyFeature) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: feature.icon)
+                .font(.caption)
+                .foregroundStyle(typeBackgroundColor)
+                .frame(width: 24, height: 24)
+                .background(
+                    Circle()
+                        .fill(typeBackgroundColor.opacity(0.08))
+                )
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(feature.label)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                
+                Text(feature.value)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                
+                if let detail = feature.detail {
+                    Text(detail)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(.tertiarySystemGroupedBackground))
+        )
+    }
+    
+    // MARK: - Context Message (Unsupported)
     
     private var contextMessage: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -237,43 +469,36 @@ struct EquationTypeView: View {
         .frame(maxWidth: 500)
     }
     
-    // MARK: - Supported Equation Actions
+  
     
     private var supportedEquationActions: some View {
         VStack(spacing: 16) {
-            // Step indicator
+         
             HStack(spacing: 6) {
-                Text("Your learning path")
+                Text("Choose your path")
                     .font(.headline)
                     .foregroundStyle(.primary)
                 
                 Spacer()
-                
-                Text("Step 1 of 4")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule()
-                            .fill(Color(.tertiarySystemGroupedBackground))
-                    )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             
-            // Option 1: Understand the concept (RECOMMENDED)
+            
             ZStack(alignment: .topTrailing) {
                 LearningPathButton(
-                    title: "Understand the Concept",
-                    subtitle: "Start here — learn what this means intuitively",
+                    title: "Understand Visually",
+                    subtitle: "See what this equation means intuitively",
                     icon: "lightbulb.fill",
                     color: .yellow
                 ) {
-                    navigationCoordinator.push(.conceptExplanation(equation: equation, type: equationType))
+                    let analysis = currentAnalysis
+                    navigationCoordinator.push(.conceptExplanation(
+                        equation: equation,
+                        type: equationType,
+                        analysis: analysis
+                    ))
                 }
                 
-                // Recommended badge
                 Text("Recommended")
                     .font(.caption2)
                     .fontWeight(.bold)
@@ -287,20 +512,20 @@ struct EquationTypeView: View {
                     .offset(x: -8, y: -6)
             }
             
-            // Option 2: Learn with examples
+           
             LearningPathButton(
-                title: "Learn with Examples",
-                subtitle: "Interactive step-by-step walkthrough",
+                title: "Solve Step-by-Step",
+                subtitle: "Walk through solving your equation",
                 icon: "list.number",
                 color: typeBackgroundColor
             ) {
                 navigationCoordinator.push(.learning(equation: equation, type: equationType))
             }
             
-            // Option 3: Visualize in AR
+            // Option 3: See in AR
             LearningPathButton(
-                title: "Visualize in AR",
-                subtitle: "See the graph in your space",
+                title: "See in AR",
+                subtitle: "Place the graph in your space",
                 icon: "arkit",
                 color: .green
             ) {
@@ -309,14 +534,20 @@ struct EquationTypeView: View {
         }
     }
     
-    // MARK: - Unsupported Equation Actions
+   
+    private var currentAnalysis: EquationAnalysis? {
+        if case .completed(let analysis) = analyzer.state {
+            return analysis
+        }
+        return nil
+    }
+    
+
     
     private var unsupportedEquationActions: some View {
         VStack(spacing: 20) {
-            // Educational card
             educationalCard
             
-            // Alternative actions
             Text("What would you like to do?")
                 .font(.headline)
                 .foregroundStyle(.primary)
@@ -360,11 +591,10 @@ struct EquationTypeView: View {
         }
     }
     
-    // MARK: - Educational Card
+    
     
     private var educationalCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
             HStack {
                 Image(systemName: "graduationcap.fill")
                     .foregroundStyle(.blue)
@@ -372,12 +602,10 @@ struct EquationTypeView: View {
                     .font(.headline)
             }
             
-            // Type-specific fun fact
             Text(educationalFunFact)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             
-            // Standard form
             if equationType != .unknown {
                 HStack(spacing: 6) {
                     Text("Standard form:")
@@ -391,7 +619,6 @@ struct EquationTypeView: View {
                 .padding(.top, 4)
             }
             
-            // Scope note
             HStack(spacing: 6) {
                 Image(systemName: "info.circle")
                     .font(.caption)
@@ -412,7 +639,7 @@ struct EquationTypeView: View {
         )
     }
     
-    /// Fun facts per equation type for the educational card
+  
     private var educationalFunFact: String {
         switch equationType {
         case .cubicPolynomial:
@@ -445,24 +672,24 @@ struct EquationTypeView: View {
             return "Every equation type has its own unique properties and real-world applications!"
         }
     }
+    
 
-    // MARK: - Animation
-
+    
     private func animateAppearance() {
         withAnimation(.easeOut(duration: 0.4)) {
             showEquation = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                showType = true
-            }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             withAnimation(.easeOut(duration: 0.4)) {
-                showConcept = true
+                showInsight = true
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+            withAnimation(.easeOut(duration: 0.4)) {
+                showProperties = true
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
             withAnimation(.easeOut(duration: 0.4)) {
                 showButtons = true
             }
@@ -470,7 +697,9 @@ struct EquationTypeView: View {
     }
 }
 
-// MARK: - Learning Path Button
+
+
+
 
 struct LearningPathButton: View {
     let title: String
@@ -482,7 +711,6 @@ struct LearningPathButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
-                // Icon
                 Image(systemName: icon)
                     .font(.title2)
                     .foregroundStyle(color)
@@ -492,14 +720,13 @@ struct LearningPathButton: View {
                             .fill(color.opacity(0.12))
                     )
                 
-                // Text content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
                         .safeTitle(minScale: 0.85, alignment: .leading)
-
+                    
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -508,7 +735,6 @@ struct LearningPathButton: View {
                 
                 Spacer()
                 
-                // Chevron
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .fontWeight(.semibold)
@@ -529,7 +755,7 @@ struct LearningPathButton: View {
     }
 }
 
-// MARK: - Preview
+
 
 #Preview("Linear - Light") {
     NavigationStack {

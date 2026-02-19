@@ -2,13 +2,15 @@
 //  LearningContainerView.swift
 //  QuickMathsAR
 //
-//  Container for LearningView with navigation and interactivity
+//  Container for step-by-step solving of the user's specific equation.
+//  Uses EquationStepGenerator for dynamic steps and a global DetailLevelSelector.
 //
 
 import SwiftUI
 
-/// Container view that wraps LearningView with proper navigation
-/// and interactive elements like prediction questions and value sliders
+/// Container view that displays a step-by-step solution for the user's
+/// specific equation, with a global detail level selector, step progress
+/// indicator, and interactive elements.
 public struct LearningContainerView: View {
     
     // MARK: - Properties
@@ -20,7 +22,6 @@ public struct LearningContainerView: View {
         self.equation = equation
         self.equationType = equationType
     }
-
     
     // MARK: - Environment
     
@@ -28,8 +29,16 @@ public struct LearningContainerView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     // MARK: - State
-
+    
+    /// Global detail level controlling all step explanations
+    @State private var detailLevel: ExplanationLevel = .intermediate
+    
+    /// Dynamically generated steps for this specific equation
+    @State private var steps: [SolvingStep] = []
+    
+    /// Fallback: content from JSON if dynamic generation fails
     @State private var content: EquationLearningContent?
+    
     @State private var isLoading: Bool = true
     @State private var loadError: Bool = false
     @State private var currentStepIndex: Int = 0
@@ -37,6 +46,10 @@ public struct LearningContainerView: View {
     @State private var selectedPrediction: String?
     @State private var hasCompletedExample: Bool = false
     @State private var sliderValue: Double = 1.0
+    @State private var explanationEngine = ExplanationEngine()
+    
+    /// Whether dynamic steps are being used (vs JSON fallback)
+    @State private var usingDynamicSteps: Bool = false
     
     // MARK: - Computed Properties
     
@@ -57,39 +70,54 @@ public struct LearningContainerView: View {
         content?.examples.first
     }
     
+    /// The steps to display — either dynamically generated or from JSON
+    private var displaySteps: [SolvingStep] {
+        if usingDynamicSteps {
+            return steps
+        }
+        return currentExample?.steps ?? []
+    }
+    
     // MARK: - Body
-
+    
     public var body: some View {
         VStack(spacing: 0) {
+            // Sticky detail level selector
+            DetailLevelSelectorView(
+                selectedLevel: $detailLevel,
+                isAIAvailable: isFoundationModelAvailable()
+            )
+            
             ScrollView {
                 VStack(spacing: 24) {
-                    if let content = content {
-                        // Header
+                    if !steps.isEmpty || content != nil {
+                        // Header with equation
                         headerSection
+                        
+                        // Step progress indicator
+                        stepProgressIndicator
                         
                         // Interactive slope/coefficient demo
                         if equationType == .linear || equationType == .quadratic {
                             interactiveSliderSection
                         }
                         
-                        // Prediction question (appears mid-learning)
+                        // Prediction question
                         if showPredictionQuestion {
                             predictionQuestionCard
                         }
                         
-                        // Main learning content
-                        mainLearningContent(content: content)
+                        // Step-by-step solution
+                        stepByStepSection
                         
-                        // Completion success message (inline, not the CTA)
+                        // Completion message
                         if hasCompletedExample {
                             completionMessage
                         }
                         
                     } else if isLoading {
-                        // Loading state
                         loadingView
                     } else {
-                        // Error state - content failed to load
                         errorView
                     }
                     
@@ -99,18 +127,17 @@ public struct LearningContainerView: View {
                 .padding(.top, 24)
             }
             
-            // Fixed bottom action bar — always visible when content loaded
-            if content != nil {
+            // Fixed bottom action bar
+            if !steps.isEmpty || content != nil {
                 FixedBottomActionBar(accentColor: accentColor) {
                     HStack(spacing: 8) {
                         Image(systemName: hasCompletedExample ? "arkit" : "sparkles")
-                        Text(hasCompletedExample ? "See It in AR" : "Explore the examples above")
+                        Text(hasCompletedExample ? "See It in AR" : "Explore the steps above")
                     }
                 } primaryAction: {
                     if hasCompletedExample {
                         navigationCoordinator.push(.arVisualization(equation: equation, type: equationType))
                     } else {
-                        // Mark as completed to unlock AR
                         withAnimation(.easeInOut(duration: 0.3)) {
                             hasCompletedExample = true
                         }
@@ -124,7 +151,7 @@ public struct LearningContainerView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Learning Examples")
+        .navigationTitle("Solve Step-by-Step")
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
             loadContent()
@@ -139,7 +166,7 @@ public struct LearningContainerView: View {
                 Image(systemName: equationType == .linear ? "line.diagonal" : "point.topleft.down.to.point.bottomright.curvepath")
                     .foregroundStyle(accentColor)
                 
-                Text("Interactive Learning")
+                Text("Your Equation")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
@@ -152,8 +179,173 @@ public struct LearningContainerView: View {
             )
             
             Text(equation)
-                .font(.system(size: 24, weight: .medium, design: .rounded))
+                .font(.system(size: 28, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
+                .safeTitle(minScale: 0.6)
+            
+            if usingDynamicSteps {
+                Label("Steps generated for your equation", systemImage: "sparkles")
+                    .font(.caption2)
+                    .foregroundStyle(.purple.opacity(0.8))
+            }
+        }
+    }
+    
+    // MARK: - Step Progress Indicator
+    
+    private var stepProgressIndicator: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("Step \(min(currentStepIndex + 1, displaySteps.count)) of \(displaySteps.count)")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                Text("\(progressPercent)%")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(accentColor)
+            }
+            
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(.tertiarySystemGroupedBackground))
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(accentColor)
+                        .frame(width: geometry.size.width * progressFraction)
+                        .animation(.easeInOut(duration: 0.3), value: currentStepIndex)
+                }
+            }
+            .frame(height: 6)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+    
+    private var progressPercent: Int {
+        guard !displaySteps.isEmpty else { return 0 }
+        return Int((Double(currentStepIndex + 1) / Double(displaySteps.count)) * 100)
+    }
+    
+    private var progressFraction: CGFloat {
+        guard !displaySteps.isEmpty else { return 0 }
+        return CGFloat(currentStepIndex + 1) / CGFloat(displaySteps.count)
+    }
+    
+    // MARK: - Step-by-Step Section
+    
+    private var stepByStepSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Section header
+            Label {
+                Text("Step-by-Step Solution")
+                    .font(.headline)
+                    .safeTitle(minScale: 0.85, alignment: .leading)
+            } icon: {
+                Image(systemName: "list.number")
+                    .foregroundStyle(accentColor)
+            }
+            
+            // Definition (from JSON content if available)
+            if let content = content {
+                LearningCard(
+                    title: "What You're Learning",
+                    icon: "lightbulb",
+                    iconColor: .yellow
+                ) {
+                    Text(content.definition)
+                        .font(.body)
+                        .lineSpacing(4)
+                }
+            }
+            
+            // Steps
+            ForEach(Array(displaySteps.enumerated()), id: \.element.id) { index, step in
+                let previousResult: String? = index > 0 ? displaySteps[index - 1].result : nil
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    StepCard(
+                        step: step,
+                        isKeyStep: step.arithmeticConceptUsed != nil,
+                        accentColor: accentColor,
+                        equation: equation,
+                        totalSteps: displaySteps.count,
+                        previousStepResult: previousResult,
+                        explanationEngine: explanationEngine
+                    )
+                    
+                    // Reasoning text at selected detail level
+                    stepReasoningView(step: step)
+                }
+                .onAppear {
+                    if index > currentStepIndex {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            currentStepIndex = index
+                        }
+                    }
+                    
+                    // Mark complete on last step
+                    if index == displaySteps.count - 1 {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                hasCompletedExample = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Step Reasoning (Detail-Level Aware)
+    
+    private func stepReasoningView(step: SolvingStep) -> some View {
+        let text = reasoningText(for: step)
+        
+        return Group {
+            if !text.isEmpty {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: detailLevel == .beginner ? "text.bubble" : detailLevel == .intermediate ? "brain" : "book.closed")
+                        .font(.caption)
+                        .foregroundStyle(accentColor.opacity(0.6))
+                        .frame(width: 20)
+                    
+                    Text(text)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(3)
+                        .safeCaption(alignment: .leading)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+                .animation(.easeInOut(duration: 0.2), value: detailLevel)
+                .id("\(step.id)-\(detailLevel.rawValue)")
+            }
+        }
+    }
+    
+    private func reasoningText(for step: SolvingStep) -> String {
+        switch detailLevel {
+        case .beginner:
+            return step.reasoning.text
+        case .intermediate:
+            return step.reasoning.detailedText ?? step.reasoning.text
+        case .advanced:
+            let detailed = step.reasoning.detailedText ?? step.reasoning.text
+            if let metaphor = step.reasoning.metaphorText {
+                return "\(detailed)\n\n💡 \(metaphor)"
+            }
+            return detailed
         }
     }
     
@@ -171,7 +363,6 @@ public struct LearningContainerView: View {
             }
 
             VStack(spacing: 12) {
-                // Slider with label
                 HStack {
                     Text(equationType == .linear ? "Slope" : "Coefficient 'a'")
                         .font(.caption)
@@ -197,11 +388,9 @@ public struct LearningContainerView: View {
                         .accessibilityHidden(true)
                 }
 
-                // Visual feedback
                 InteractiveGraphPreview(value: sliderValue, equationType: equationType)
                     .frame(height: 120)
 
-                // Dynamic insight text with icon
                 HStack(spacing: 8) {
                     Image(systemName: sliderInsightIcon)
                         .font(.caption)
@@ -222,16 +411,13 @@ public struct LearningContainerView: View {
             )
         }
         .onChange(of: sliderValue) { oldValue, newValue in
-            // Haptic on crossing zero
             if (oldValue < 0 && newValue >= 0) || (oldValue >= 0 && newValue < 0) {
                 HapticManager.shared.medium()
             }
-            // Light haptic on integer values
             else if abs(newValue.truncatingRemainder(dividingBy: 1.0)) < 0.05 {
                 HapticManager.shared.light()
             }
 
-            // Show prediction question after some interaction
             if abs(newValue) > 1.5 && !showPredictionQuestion && !hasCompletedExample {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     showPredictionQuestion = true
@@ -358,14 +544,12 @@ public struct LearningContainerView: View {
             selectedPrediction = option
         }
 
-        // Haptic feedback based on correctness
         if option == correctPrediction {
             HapticManager.shared.play(.success)
         } else {
             HapticManager.shared.play(.warning)
         }
 
-        // Mark as completed after answering
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             withAnimation(.easeInOut(duration: 0.3)) {
                 hasCompletedExample = true
@@ -391,56 +575,7 @@ public struct LearningContainerView: View {
             : "It flips upside down"
     }
     
-    // MARK: - Main Learning Content
-    
-    private func mainLearningContent(content: EquationLearningContent) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Section header
-            Label {
-                Text("Step-by-Step Solution")
-                    .font(.headline)
-                    .safeTitle(minScale: 0.85, alignment: .leading)
-            } icon: {
-                Image(systemName: "list.number")
-                    .foregroundStyle(accentColor)
-            }
-            
-            // Definition
-            LearningCard(
-                title: "What You're Learning",
-                icon: "lightbulb",
-                iconColor: .yellow
-            ) {
-                Text(content.definition)
-                    .font(.body)
-                    .lineSpacing(4)
-            }
-            
-            // Solving approach
-            LearningCard(
-                title: "The Approach",
-                icon: "brain.head.profile",
-                iconColor: .purple
-            ) {
-                Text(content.solvingMethodConcept)
-                    .font(.body)
-                    .lineSpacing(4)
-            }
-            
-            // Steps
-            if let example = currentExample {
-                ForEach(example.steps) { step in
-                    StepCard(
-                        step: step,
-                        isKeyStep: step.arithmeticConceptUsed != nil,
-                        accentColor: accentColor
-                    )
-                }
-            }
-        }
-    }
-    
-    // MARK: - Completion Message (inline, not the CTA)
+    // MARK: - Completion Message
     
     private var completionMessage: some View {
         HStack(spacing: 12) {
@@ -451,7 +586,7 @@ public struct LearningContainerView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Great Progress!")
                     .font(.headline)
-                Text("You've explored the interactive example")
+                Text("You've solved your equation step by step")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -472,11 +607,11 @@ public struct LearningContainerView: View {
                 .scaleEffect(1.2)
 
             VStack(spacing: 8) {
-                Text("Loading learning content...")
+                Text("Generating solution steps...")
                     .font(.headline)
                     .foregroundStyle(.primary)
 
-                Text("Preparing interactive examples for \(equationType.displayName.lowercased())s")
+                Text("Preparing a step-by-step walkthrough for your equation")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -495,11 +630,11 @@ public struct LearningContainerView: View {
                 .foregroundStyle(.orange)
 
             VStack(spacing: 8) {
-                Text("Couldn't load content")
+                Text("Couldn't generate steps")
                     .font(.headline)
                     .foregroundStyle(.primary)
 
-                Text("The learning content for this equation type isn't available.")
+                Text("We'll show you a pre-made example instead.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -518,14 +653,28 @@ public struct LearningContainerView: View {
         .padding(60)
     }
 
-    // MARK: - Helpers
+    // MARK: - Content Loading
     
     private func loadContent() {
         isLoading = true
         loadError = false
-
-        // Simulate a brief load time for smoother UX
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Step 1: Try dynamic step generation for the user's equation
+            let generator = EquationStepGenerator()
+            if let dynamicSteps = generator.generateSteps(equation: equation, type: equationType),
+               !dynamicSteps.isEmpty {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    steps = dynamicSteps
+                    usingDynamicSteps = true
+                    isLoading = false
+                }
+                // Also load JSON content for definitions/concepts
+                content = ContentLoader.shared.getEquationContent(for: equationType)
+                return
+            }
+            
+            // Step 2: Fallback to JSON content
             let loadedContent = ContentLoader.shared.getEquationContent(for: equationType)
             withAnimation(.easeInOut(duration: 0.2)) {
                 content = loadedContent
@@ -594,14 +743,12 @@ struct InteractiveGraphPreview: View {
                 let color: Color = equationType == .linear ? .blue : .purple
                 
                 if equationType == .linear {
-                    // y = mx (line through origin with slope m)
                     let slope = value * 0.5
                     let startY = center.y + slope * center.x
                     let endY = center.y - slope * center.x
                     curve.move(to: CGPoint(x: 0, y: startY))
                     curve.addLine(to: CGPoint(x: size.width, y: endY))
                 } else {
-                    // y = ax² (parabola)
                     let step: CGFloat = 2
                     for x in stride(from: CGFloat(0), through: size.width, by: step) {
                         let normalizedX = (x - center.x) / (size.width / 4)
@@ -677,7 +824,6 @@ struct PredictionOptionButton: View {
 
 // MARK: - Bullet Point Component
 
-/// A bullet point with icon and text for structured content
 struct BulletPoint: View {
     let icon: String
     let text: String
@@ -706,7 +852,6 @@ struct BulletPoint: View {
 
 // MARK: - Key Insight Card
 
-/// A card highlighting key learning insights
 struct KeyInsightCard: View {
     let title: String
     let points: [String]
@@ -743,11 +888,21 @@ struct KeyInsightCard: View {
 
 // MARK: - Preview
 
-#Preview("Learning Container") {
+#Preview("Learning Container - Linear") {
     NavigationStack {
         LearningContainerView(
             equation: "2x + 5 = 13",
             equationType: .linear
+        )
+        .environmentObject(NavigationCoordinator())
+    }
+}
+
+#Preview("Learning Container - Quadratic") {
+    NavigationStack {
+        LearningContainerView(
+            equation: "x² + 5x + 6 = 0",
+            equationType: .quadratic
         )
         .environmentObject(NavigationCoordinator())
     }

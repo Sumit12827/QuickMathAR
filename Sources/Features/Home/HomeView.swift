@@ -115,7 +115,7 @@ struct HomeView: View {
                     .foregroundStyle(Color.accentColor)
             }
 
-            Text("Quick Maths AR")
+            Text("Design your Equation")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .safeTitle(minScale: 0.8)

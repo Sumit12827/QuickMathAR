@@ -35,8 +35,8 @@ struct AppRouter: View {
                 EquationInputView()
             case .equationType(let equation, let type):
                 EquationTypeView(equation: equation, equationType: type)
-            case .conceptExplanation(let equation, let type):
-                ConceptExplanationView(equation: equation, equationType: type)
+            case .conceptExplanation(let equation, let type, let analysis):
+                ConceptExplanationView(equation: equation, equationType: type, analysis: analysis)
             case .learning(let equation, let type):
                 LearningContainerView(equation: equation, equationType: type)
             case .arVisualization(let equation, let type):

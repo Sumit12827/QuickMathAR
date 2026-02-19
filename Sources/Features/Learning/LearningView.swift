@@ -22,6 +22,9 @@ struct LearningView: View {
     /// Action when AR button is tapped
     var onViewInAR: (() -> Void)?
     
+    /// AI explanation engine (optional — nil means no AI features)
+    var explanationEngine: ExplanationEngine?
+    
     // MARK: - Environment
     
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -71,6 +74,9 @@ struct LearningView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle(content.displayName)
         .navigationBarTitleDisplayMode(.large)
+        .onDisappear {
+            explanationEngine?.cancelAll()
+        }
     }
     
     // MARK: - Header Section
@@ -180,11 +186,16 @@ struct LearningView: View {
             
             // Steps
             VStack(spacing: 12) {
-                ForEach(example.steps) { step in
+                ForEach(Array(example.steps.enumerated()), id: \.element.id) { index, step in
+                    let previousResult: String? = index > 0 ? example.steps[index - 1].result : nil
                     StepCard(
                         step: step,
                         isKeyStep: isKeyStep(step),
-                        accentColor: accentColor
+                        accentColor: accentColor,
+                        equation: example.equation,
+                        totalSteps: example.steps.count,
+                        previousStepResult: previousResult,
+                        explanationEngine: explanationEngine
                     )
                 }
             }
@@ -334,6 +345,12 @@ struct StepCard: View {
     let step: SolvingStep
     let isKeyStep: Bool
     let accentColor: Color
+    
+    // AI explanation integration (optional for backward compatibility)
+    var equation: String? = nil
+    var totalSteps: Int = 0
+    var previousStepResult: String? = nil
+    var explanationEngine: ExplanationEngine? = nil
 
     @State private var showDetailedReasoning = false
 
@@ -422,6 +439,19 @@ struct StepCard: View {
                 if let concept = step.arithmeticConceptUsed {
                     ConceptTag(concept: concept)
                         .padding(.top, 4)
+                }
+                
+                // "Why This Works" AI explanation card
+                if let engine = explanationEngine, let eq = equation {
+                    WhyThisWorksCard(
+                        step: step,
+                        equation: eq,
+                        totalSteps: totalSteps,
+                        previousStepResult: previousStepResult,
+                        accentColor: accentColor,
+                        explanationEngine: engine
+                    )
+                    .padding(.top, 6)
                 }
             }
         }

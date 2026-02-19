@@ -103,7 +103,7 @@ public struct ConceptExplorerView: View {
                 color: .blue,
                 examples: ["2x + 5 = 13", "y = 3x - 2", "x - 4 = 0"]
             ) {
-                navigationCoordinator.push(.conceptExplanation(equation: "2x + 5 = 13", type: .linear))
+                navigationCoordinator.push(.conceptExplanation(equation: "2x + 5 = 13", type: .linear, analysis: nil))
             }
             
             // Quadratic Equations Card
@@ -114,7 +114,7 @@ public struct ConceptExplorerView: View {
                 color: .purple,
                 examples: ["x² + 5x + 6 = 0", "y = x² - 4", "2x² - 3x + 1 = 0"]
             ) {
-                navigationCoordinator.push(.conceptExplanation(equation: "x² + 5x + 6 = 0", type: .quadratic))
+                navigationCoordinator.push(.conceptExplanation(equation: "x² + 5x + 6 = 0", type: .quadratic, analysis: nil))
             }
             
             // Coming Soon Card

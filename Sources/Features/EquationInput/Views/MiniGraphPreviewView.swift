@@ -3,13 +3,11 @@
 //  QuickMathsAR
 //
 //  Compact live graph preview during equation building.
-//  Connects symbol ➔ concept ➔ visual meaning.
-//
+
 
 import SwiftUI
 
-/// A compact graph preview that updates in real-time as the equation is built.
-/// Shows the emerging shape: line for linear, curve for quadratic.
+
 struct MiniGraphPreviewView: View {
     let equationShape: EquationShape
     let components: [EquationComponent]
