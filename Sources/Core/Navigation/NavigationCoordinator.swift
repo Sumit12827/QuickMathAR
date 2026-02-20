@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  NavigationCoordinator.swift
 //  QuickMathsAR
@@ -50,3 +51,4 @@ final class NavigationCoordinator: ObservableObject {
         path.append(route)
     }
 }
+#endif

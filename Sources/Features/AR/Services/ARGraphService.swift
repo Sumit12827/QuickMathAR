@@ -5,6 +5,8 @@
 //  High-level service for AR graph visualization
 //
 
+#if os(iOS)
+
 import Foundation
 
 /// Service for creating AR graph visualizations
@@ -130,3 +132,5 @@ public final class ARGraphService {
         ]
     }
 }
+
+#endif

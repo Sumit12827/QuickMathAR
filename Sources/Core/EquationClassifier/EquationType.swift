@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  EquationType.swift
 //  QuickMathsAR
@@ -447,3 +448,4 @@ public enum EquationType: Equatable, Hashable, Identifiable {
         }
     }
 }
+#endif

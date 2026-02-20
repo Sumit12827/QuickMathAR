@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  ViewModelProtocol.swift
 //  QuickMathsAR
@@ -22,3 +23,4 @@ extension ViewModelProtocol {
     func onAppear() {}
     func onDisappear() {}
 }
+#endif

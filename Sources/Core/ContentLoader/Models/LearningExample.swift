@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  LearningExample.swift
 //  QuickMathsAR
@@ -245,3 +246,4 @@ public enum ExampleDifficulty: String, Codable, CaseIterable, Sendable {
         }
     }
 }
+#endif

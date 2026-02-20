@@ -5,49 +5,44 @@
 //  Provides intuitive, visual explanation of equation types
 //
 
+#if os(iOS)
 import SwiftUI
 
-/// A view that explains equation concepts intuitively without heavy formulas
-/// Focuses on "what", "why", and common misconceptions
+/// A view that explains equation concepts visually with interactive exploration
 public struct ConceptExplanationView: View {
-    
+
     // MARK: - Properties
-    
-    /// The equation being explained
+
     public let equation: String
-    
-    /// The type of equation
     public let equationType: EquationType
-    
-    /// Optional pre-computed analysis from Screen 1
     public let analysis: EquationAnalysis?
-    
+
     public init(equation: String, equationType: EquationType, analysis: EquationAnalysis? = nil) {
         self.equation = equation
         self.equationType = equationType
         self.analysis = analysis
     }
 
-    
     // MARK: - Environment
-    
+
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    
+
     // MARK: - State
-    
-    /// Fallback analyzer if no analysis was passed from Screen 1
+
     @StateObject private var fallbackAnalyzer = EquationAnalyzer()
-    
-    /// Coefficient slider value for interactive exploration
     @State private var coeffSliderValue: Double = 1.0
-    
+    @State private var expandedConnection: String? = nil
+    @State private var challengeAnswer: Int? = nil
+    @State private var showBallAnimation = false
+    @State private var ballProgress: CGFloat = 0
+
     // MARK: - Computed Properties
-    
+
     private var horizontalPadding: CGFloat {
         horizontalSizeClass == .regular ? 48 : 20
     }
-    
+
     private var accentColor: Color {
         switch equationType {
         case .linear: return .blue
@@ -56,62 +51,47 @@ public struct ConceptExplanationView: View {
         default: return .orange
         }
     }
-    
-    /// Load content to check for conceptFlow
+
     private var content: EquationLearningContent? {
         ContentLoader.shared.getEquationContent(for: equationType)
     }
-    
-    // MARK: - Body
 
-    /// The effective analysis — from parameter or fallback
     private var effectiveAnalysis: EquationAnalysis? {
-        if let analysis = analysis {
-            return analysis
-        }
-        if case .completed(let a) = fallbackAnalyzer.state {
-            return a
-        }
+        if let analysis = analysis { return analysis }
+        if case .completed(let a) = fallbackAnalyzer.state { return a }
         return nil
     }
-    
+
+    // MARK: - Body
+
     public var body: some View {
         VStack(spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
-                    // Header with equation
                     headerSection
                         .padding(.bottom, 4)
-                    
-                    // Equation-specific AI insight (NEW)
-                    equationInsightCard
-                    
-                    // Interactive coefficient explorer (NEW)
-                    if effectiveAnalysis != nil {
-                        coefficientExplorerCard
-                    }
 
-                    // Interactive concept flow (if available in content)
+                    // Interactive coefficient explorer with live graph
+                    interactiveExplorerCard
+
+                    // Interactive concept flow (if available)
                     if let conceptFlow = content?.conceptFlow, !conceptFlow.isEmpty {
                         ConceptPagerView(pages: conceptFlow, accentColor: accentColor)
                             .frame(height: 480)
                             .padding(.bottom, 8)
-                    } else {
-                        // Fallback to static cards
-                        VStack(spacing: 16) {
-                            whatIsItCard
-                            realWorldCard
-                            confusionCard
-                            visualCard
-                        }
                     }
+
+                    // Real world connections
+                    realWorldConnectionsCard
+
+                    // Quick challenge
+                    quickChallengeCard
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, 16)
                 .padding(.bottom, 24)
             }
 
-            // Fixed bottom action bar — always visible
             FixedBottomActionBar(accentColor: accentColor) {
                 HStack(spacing: 8) {
                     Text("See It Step by Step")
@@ -133,18 +113,24 @@ public struct ConceptExplanationView: View {
         .navigationTitle("Understand Visually")
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
-            // If no analysis was passed, run the analyzer
             if analysis == nil {
                 fallbackAnalyzer.analyze(equation: equation, type: equationType)
             }
+            // Initialize slider from analysis
+            if let a = effectiveAnalysis {
+                if equationType == .linear {
+                    coeffSliderValue = Double(a.coefficients.first(where: { $0.symbol == "m" })?.value ?? 1)
+                } else {
+                    coeffSliderValue = Double(a.coefficients.first(where: { $0.symbol == "a" })?.value ?? 1)
+                }
+            }
         }
     }
-    
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Icon
             Image(systemName: equationType == .linear ? "line.diagonal" : "point.topleft.down.to.point.bottomright.curvepath")
                 .font(.system(size: 48, weight: .light))
                 .foregroundStyle(accentColor)
@@ -153,8 +139,7 @@ public struct ConceptExplanationView: View {
                     Circle()
                         .fill(accentColor.opacity(0.1))
                 )
-            
-            // Equation display
+
             Text(equation)
                 .font(.system(size: 24, weight: .medium, design: .rounded))
                 .foregroundStyle(.primary)
@@ -164,329 +149,297 @@ public struct ConceptExplanationView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(.secondarySystemGroupedBackground))
                 )
-            
-            // Type label
+
             Text(equationType.displayName)
                 .font(.headline)
                 .foregroundStyle(accentColor)
         }
     }
-    
-    // MARK: - What Is It Card
 
-    private var whatIsItCard: some View {
-        ConceptCard(
-            title: "What is a \(equationType.displayName)?",
-            icon: "lightbulb.fill",
-            iconColor: .yellow
-        ) {
-            VStack(alignment: .leading, spacing: 14) {
-                Text(whatIsItIntro)
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                    .lineSpacing(4)
-                    .safeBody(alignment: .leading)
+    // MARK: - Interactive Explorer Card
 
-                // Key characteristics as bullet points
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(whatIsItKeyPoints, id: \.self) { point in
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.caption)
-                                .foregroundStyle(accentColor)
-                            Text(point)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .padding(.top, 4)
-            }
-        }
-    }
-
-    private var whatIsItIntro: String {
-        switch equationType {
-        case .linear:
-            return "Think of a linear equation as a balance scale. Whatever you do to one side, you must do to the other to keep it balanced."
-        case .quadratic:
-            return "A quadratic equation is like a fountain of water—it goes up, reaches a peak, and comes back down."
-        case .constant:
-            return "A constant equation has no variables—it's just comparing two numbers. These are often true or false statements."
-        default:
-            return "This is an advanced equation type. These build on the concepts from linear and quadratic equations."
-        }
-    }
-
-    private var whatIsItKeyPoints: [String] {
-        switch equationType {
-        case .linear:
-            return [
-                "Forms a straight line when graphed—no curves",
-                "Has exactly one solution (one value of x)",
-                "The highest power of x is 1"
-            ]
-        case .quadratic:
-            return [
-                "The squared term (x²) creates a curved parabola",
-                "Can have 0, 1, or 2 solutions",
-                "Found everywhere: thrown balls, bridges, satellite dishes"
-            ]
-        case .constant:
-            return [
-                "No variables—just pure numbers",
-                "Either always true or always false"
-            ]
-        default:
-            return [
-                "Advanced equation types build on fundamentals",
-                "Practice with linear and quadratic equations first"
-            ]
-        }
-    }
-    
-    // MARK: - Real World Card
-    
-    private var realWorldCard: some View {
-        ConceptCard(
-            title: "Why Does This Matter?",
-            icon: "globe",
-            iconColor: .green
-        ) {
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(realWorldExamples, id: \.self) { example in
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                            .font(.subheadline)
-                        
-                        Text(example)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-        }
-    }
-    
-    private var realWorldExamples: [String] {
-        switch equationType {
-        case .linear:
-            return [
-                "Calculating how long a trip will take at constant speed",
-                "Figuring out earnings based on hourly wage",
-                "Converting between temperature scales (Celsius ↔ Fahrenheit)",
-                "Predicting costs when there's a flat fee plus per-unit charge"
-            ]
-        case .quadratic:
-            return [
-                "Predicting where a basketball will land after a throw",
-                "Designing arches in architecture and bridges",
-                "Calculating maximum profit in business",
-                "Understanding how objects fall under gravity"
-            ]
-        case .constant:
-            return [
-                "Checking if mathematical statements are true",
-                "Verifying basic arithmetic calculations"
-            ]
-        default:
-            return [
-                "Advanced equation types model complex real-world phenomena",
-                "Understanding basics helps you tackle harder problems later"
-            ]
-        }
-    }
-    
-    // MARK: - Confusion Card
-
-    private var confusionCard: some View {
-        ConceptCard(
-            title: "Common Pitfalls",
-            icon: "exclamationmark.triangle.fill",
-            iconColor: .orange
-        ) {
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(confusionPoints, id: \.title) { point in
-                    CommonMistakeCard(
-                        title: point.title,
-                        explanation: point.explanation,
-                        accentColor: accentColor
-                    )
-                }
-            }
-        }
-    }
-    
-    private var confusionPoints: [(title: String, explanation: String)] {
-        switch equationType {
-        case .linear:
-            return [
-                ("Order of operations", "Remember to undo operations in reverse order—like unwrapping a gift!"),
-                ("Negative signs", "When you move a term to the other side, its sign flips."),
-                ("Fractions as coefficients", "Multiply both sides by the denominator to clear fractions.")
-            ]
-        case .quadratic:
-            return [
-                ("Two solutions", "Unlike linear equations, quadratics can have 0, 1, or 2 solutions."),
-                ("Factoring vs. Formula", "Not all quadratics factor nicely—that's when the quadratic formula helps."),
-                ("The parabola direction", "If 'a' is positive, it opens upward ∪. If negative, it opens downward ∩.")
-            ]
-        case .constant:
-            return [
-                ("No variables to solve", "These equations just tell you if a statement is true or false."),
-                ("Simple but important", "They help verify your work in more complex problems.")
-            ]
-        default:
-            return [
-                ("Complex structures", "Advanced equations need specialized techniques."),
-                ("Multiple solutions", "Can have many solutions depending on the equation type.")
-            ]
-        }
-    }
-    
-    // MARK: - Visual Card
-
-    private var visualCard: some View {
-        ConceptCard(
-            title: "Visual Intuition",
-            icon: "eye.fill",
-            iconColor: accentColor
-        ) {
-            VStack(spacing: 16) {
-                // Simple visual representation
-                if equationType != .unknown {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemBackground))
-
-                        SimpleGraphPreview(equationType: equationType)
-                            .padding(8)
-                    }
-                    .frame(height: 160)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(accentColor.opacity(0.2), lineWidth: 1)
-                    )
-                }
-
-                // Graph description with key points
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(visualKeyPoints, id: \.self) { point in
-                        HStack(alignment: .top, spacing: 10) {
-                            Image(systemName: "arrow.right.circle.fill")
-                                .font(.caption)
-                                .foregroundStyle(accentColor)
-                            Text(point)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private var visualKeyPoints: [String] {
-        switch equationType {
-        case .linear:
-            return [
-                "Always graphs as a straight line",
-                "Slope tells you how steep the line is",
-                "Y-intercept is where it crosses the vertical axis"
-            ]
-        case .quadratic:
-            return [
-                "Forms a parabola—a smooth U-shape",
-                "The vertex is the highest or lowest point",
-                "Opens up if 'a' is positive, down if negative"
-            ]
-        case .constant:
-            return [
-                "No graph needed—just a true or false statement",
-                "Think of it as checking if both sides balance"
-            ]
-        default:
-            return [
-                "Creates complex curves with multiple features",
-                "Shape depends on the equation's structure and coefficients"
-            ]
-        }
-    }
-    
-    // MARK: - Equation Insight Card (NEW)
-    
-    private var equationInsightCard: some View {
+    private var interactiveExplorerCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Header with AI badge
-            HStack(spacing: 8) {
-                Image(systemName: "brain.head.profile")
-                    .font(.body)
-                    .foregroundStyle(.purple)
-                
-                Text("About Your Equation")
+            Label {
+                Text("Interactive Explorer")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.purple)
-                
-                Spacer()
-                
-                if isFoundationModelAvailable() {
-                    Label("Apple Intelligence", systemImage: "apple.intelligence")
-                        .font(.caption2)
+            } icon: {
+                Image(systemName: "slider.horizontal.3")
+                    .foregroundStyle(accentColor)
+            }
+
+            VStack(spacing: 12) {
+                let param = equationType == .linear ? "slope" : "'a'"
+
+                Text("What happens when you change \(param)?")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                // Live interactive graph
+                ZStack {
+                    InteractiveGraphCanvas(
+                        value: coeffSliderValue,
+                        equationType: equationType,
+                        accentColor: accentColor,
+                        showBall: showBallAnimation,
+                        ballProgress: ballProgress
+                    )
+                    .frame(height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                )
+
+                // Slider with value display
+                HStack {
+                    Text(equationType == .linear ? "Slope" : "a")
+                        .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundStyle(.purple.opacity(0.8))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(
-                            Capsule()
-                                .fill(.purple.opacity(0.1))
-                        )
+                        .foregroundStyle(.secondary)
+
+                    Slider(value: $coeffSliderValue, in: -3...3, step: 0.5)
+                        .tint(accentColor)
+
+                    Text(String(format: "%.1f", coeffSliderValue))
+                        .font(.system(.caption, design: .monospaced))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(accentColor)
+                        .frame(width: 40)
+                }
+                .onChange(of: coeffSliderValue) { _, newValue in
+                    HapticManager.shared.light()
+                    // Reset ball animation on slider change
+                    if showBallAnimation {
+                        showBallAnimation = false
+                        ballProgress = 0
+                    }
+                }
+
+                // Direction indicator
+                HStack(spacing: 6) {
+                    Image(systemName: sliderDirectionIcon)
+                        .font(.caption)
+                        .foregroundStyle(accentColor)
+
+                    Text(sliderDirectionText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Ball animation button
+                Button {
+                    showBallAnimation = true
+                    ballProgress = 0
+                    withAnimation(.easeInOut(duration: 2.0)) {
+                        ballProgress = 1
+                    }
+                    HapticManager.shared.light()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "play.circle.fill")
+                        Text("Watch a ball follow this path")
+                            .font(.caption)
+                    }
+                    .foregroundStyle(accentColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(accentColor.opacity(0.1))
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+        }
+    }
+
+    private var sliderDirectionIcon: String {
+        if equationType == .linear {
+            if coeffSliderValue > 0 { return "arrow.up.right" }
+            else if coeffSliderValue < 0 { return "arrow.down.right" }
+            else { return "arrow.right" }
+        } else {
+            if coeffSliderValue > 0 { return "arrow.up.to.line" }
+            else if coeffSliderValue < 0 { return "arrow.down.to.line" }
+            else { return "minus" }
+        }
+    }
+
+    private var sliderDirectionText: String {
+        if equationType == .linear {
+            if coeffSliderValue > 1 { return "Steep upward slope" }
+            else if coeffSliderValue > 0 { return "Gentle upward slope" }
+            else if coeffSliderValue == 0 { return "Flat \u{2014} horizontal line" }
+            else if coeffSliderValue > -1 { return "Gentle downward slope" }
+            else { return "Steep downward slope" }
+        } else {
+            if coeffSliderValue > 1 { return "Opens upward (U-shape) \u{2014} Narrow" }
+            else if coeffSliderValue > 0 { return "Opens upward (U-shape) \u{2014} Wide" }
+            else if abs(coeffSliderValue) < 0.3 { return "Nearly flat \u{2014} approaching a line" }
+            else if coeffSliderValue > -1 { return "Opens downward (\u{2229}-shape) \u{2014} Wide" }
+            else { return "Opens downward (\u{2229}-shape) \u{2014} Narrow" }
+        }
+    }
+
+    // MARK: - Real World Connections Card
+
+    private var realWorldConnectionsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                Text("Real World Connections")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+            } icon: {
+                Image(systemName: "globe")
+                    .foregroundStyle(.green)
+            }
+
+            VStack(spacing: 8) {
+                ForEach(realWorldItems, id: \.icon) { item in
+                    realWorldRow(item: item)
                 }
             }
-            
-            if let a = effectiveAnalysis {
-                // What this equation does
-                Text(a.whatThisEquationDoes)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .lineSpacing(3)
-                    .safeBody(alignment: .leading)
-                
-                // Real-world analogy
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "lightbulb.fill")
-                        .font(.caption)
-                        .foregroundStyle(.yellow)
-                        .frame(width: 20)
-                    
-                    Text(a.realWorldAnalogy)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .safeCaption(alignment: .leading)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+
+    private func realWorldRow(item: RealWorldItem) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    expandedConnection = expandedConnection == item.icon ? nil : item.icon
                 }
-                
-                // Solution preview
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                    
-                    Text(a.solutionPreview)
-                        .font(.caption)
+                HapticManager.shared.light()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: item.icon)
+                        .font(.body)
+                        .foregroundStyle(accentColor)
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle()
+                                .fill(accentColor.opacity(0.1))
+                        )
+
+                    Text(item.title)
+                        .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
+
+                    Spacer()
+
+                    Image(systemName: expandedConnection == item.icon ? "chevron.up" : "chevron.down")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
-            } else {
-                // Loading shimmer
-                VStack(alignment: .leading, spacing: 10) {
-                    ShimmerView(lineCount: 1)
-                        .frame(height: 16)
-                    ShimmerView(lineCount: 1)
-                        .frame(height: 16)
-                        .frame(maxWidth: 240)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+
+            if expandedConnection == item.icon {
+                Text(item.description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 44)
+                    .padding(.bottom, 8)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private struct RealWorldItem {
+        let icon: String
+        let title: String
+        let description: String
+    }
+
+    private var realWorldItems: [RealWorldItem] {
+        if equationType == .quadratic {
+            return [
+                RealWorldItem(icon: "basketball.fill", title: "Basketball shots", description: "The arc of a basketball follows a parabolic path \u{2014} the coefficients determine how high and far it goes."),
+                RealWorldItem(icon: "building.columns.fill", title: "Bridge arches", description: "Many bridges use parabolic arches because they distribute weight evenly along the curve."),
+                RealWorldItem(icon: "chart.line.uptrend.xyaxis", title: "Profit curves", description: "Businesses use quadratic models to find the price point that maximizes profit."),
+                RealWorldItem(icon: "scope", title: "Satellite dishes", description: "Parabolic reflectors focus signals to a single point \u{2014} the vertex of the parabola.")
+            ]
+        } else {
+            return [
+                RealWorldItem(icon: "car.fill", title: "Constant speed travel", description: "Distance = speed \u{00D7} time is a linear relationship. Double the time, double the distance."),
+                RealWorldItem(icon: "dollarsign.circle.fill", title: "Hourly wages", description: "Your earnings grow linearly with hours worked \u{2014} the slope is your hourly rate."),
+                RealWorldItem(icon: "thermometer.medium", title: "Temperature conversion", description: "Celsius to Fahrenheit is a linear equation: F = 1.8C + 32."),
+                RealWorldItem(icon: "bolt.fill", title: "Ohm's Law", description: "Voltage = Current \u{00D7} Resistance. A straight-line relationship fundamental to electronics.")
+            ]
+        }
+    }
+
+    // MARK: - Quick Challenge Card
+
+    private var quickChallengeCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: "target")
+                    .foregroundStyle(.orange)
+
+                Text("Quick Check")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+            }
+
+            Text(challengeQuestion)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+
+            // Answer options as pill buttons
+            HStack(spacing: 8) {
+                ForEach(Array(challengeOptions.enumerated()), id: \.offset) { index, option in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            challengeAnswer = index
+                        }
+                        if index == correctChallengeIndex {
+                            HapticManager.shared.play(.success)
+                        } else {
+                            HapticManager.shared.play(.warning)
+                        }
+                    } label: {
+                        Text(option)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(challengeButtonForeground(index))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(challengeButtonBackground(index))
+                            )
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(challengeButtonBorder(index), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(challengeAnswer != nil)
                 }
-                .padding(.vertical, 4)
+            }
+
+            // Feedback
+            if let answer = challengeAnswer {
+                Text(answer == correctChallengeIndex ? "Correct!" : "Not quite \u{2014} \(challengeExplanation)")
+                    .font(.caption)
+                    .foregroundStyle(answer == correctChallengeIndex ? .green : .orange)
+                    .transition(.opacity)
             }
         }
         .padding(16)
@@ -496,125 +449,163 @@ public struct ConceptExplanationView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(
-                    LinearGradient(
-                        colors: [.purple.opacity(0.4), .purple.opacity(0.15)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
+                .strokeBorder(Color.orange.opacity(0.15), lineWidth: 1)
         )
     }
-    
-    // MARK: - Coefficient Explorer Card (NEW)
-    
-    private var coefficientExplorerCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Label {
-                Text("What do the numbers mean?")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-            } icon: {
-                Image(systemName: "slider.horizontal.3")
-                    .foregroundStyle(accentColor)
-            }
-            
-            if let a = effectiveAnalysis, !a.coefficients.isEmpty {
-                // Coefficient badges
-                HStack(spacing: 10) {
-                    ForEach(a.coefficients, id: \.symbol) { coeff in
-                        VStack(spacing: 4) {
-                            Text(coeff.symbol)
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                                .foregroundStyle(accentColor)
-                            
-                            Text(coeff.displayValue)
-                                .font(.system(.title3, design: .rounded))
-                                .fontWeight(.semibold)
-                            
-                            Text(coeff.meaning)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(accentColor.opacity(0.06))
-                        )
-                    }
-                }
-                
-                // Interactive exploration
-                VStack(spacing: 10) {
-                    let param = equationType == .linear ? "slope" : "'a'"
-                    HStack {
-                        Text("Adjust \(param)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        Slider(value: $coeffSliderValue, in: -3...3, step: 0.5)
-                            .tint(accentColor)
-                        
-                        Text(String(format: "%.1f", coeffSliderValue))
-                            .font(.system(.caption, design: .monospaced))
-                            .fontWeight(.semibold)
-                            .foregroundStyle(accentColor)
-                            .frame(width: 40)
-                    }
-                    
-                    SimpleGraphPreview(equationType: equationType)
-                        .frame(height: 100)
-                    
-                    Text(coefficientExplorerInsight)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .padding(12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
-                )
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
+
+    private func challengeButtonForeground(_ index: Int) -> Color {
+        guard let answer = challengeAnswer else { return .primary }
+        if index == correctChallengeIndex { return .white }
+        if index == answer { return .white }
+        return .primary
     }
-    
-    private var coefficientExplorerInsight: String {
-        if equationType == .linear {
-            if coeffSliderValue > 1 {
-                return "A steep positive slope — the line rises quickly to the right."
-            } else if coeffSliderValue > 0 {
-                return "A gentle positive slope — the line rises slowly."
-            } else if coeffSliderValue == 0 {
-                return "Flat line — no change in y at all."
-            } else if coeffSliderValue > -1 {
-                return "A gentle negative slope — the line falls slowly."
-            } else {
-                return "A steep negative slope — the line drops quickly."
-            }
+
+    private func challengeButtonBackground(_ index: Int) -> Color {
+        guard let answer = challengeAnswer else { return Color(.tertiarySystemGroupedBackground) }
+        if index == correctChallengeIndex { return .green }
+        if index == answer { return .red.opacity(0.7) }
+        return Color(.tertiarySystemGroupedBackground)
+    }
+
+    private func challengeButtonBorder(_ index: Int) -> Color {
+        guard challengeAnswer != nil else { return accentColor.opacity(0.2) }
+        return .clear
+    }
+
+    private var challengeQuestion: String {
+        if equationType == .quadratic {
+            return "If the discriminant is negative, how many real roots does the equation have?"
         } else {
-            if coeffSliderValue > 0.5 {
-                return "Parabola opens upward (U-shape). Larger 'a' makes it narrower."
-            } else if coeffSliderValue > -0.5 {
-                return "Nearly flat — close to a straight line."
-            } else {
-                return "Parabola opens downward (∩-shape). More negative 'a' makes it narrower."
+            return "If the slope is zero, what does the graph look like?"
+        }
+    }
+
+    private var challengeOptions: [String] {
+        if equationType == .quadratic {
+            return ["0", "1", "2", "Infinite"]
+        } else {
+            return ["Vertical line", "Horizontal line", "Diagonal line", "No graph"]
+        }
+    }
+
+    private var correctChallengeIndex: Int {
+        0 // First option is correct for both
+    }
+
+    private var challengeExplanation: String {
+        if equationType == .quadratic {
+            return "A negative discriminant means the parabola never crosses the x-axis."
+        } else {
+            return "Zero slope means no change in y \u{2014} a perfectly flat horizontal line."
+        }
+    }
+}
+
+// MARK: - Interactive Graph Canvas (responds to slider value)
+
+struct InteractiveGraphCanvas: View {
+    let value: Double
+    let equationType: EquationType
+    let accentColor: Color
+    var showBall: Bool = false
+    var ballProgress: CGFloat = 0
+
+    var body: some View {
+        GeometryReader { geometry in
+            Canvas { context, size in
+                let center = CGPoint(x: size.width / 2, y: size.height / 2)
+
+                // Grid
+                let gridSpacing = size.width / 8
+                for i in stride(from: CGFloat(0), through: size.width, by: gridSpacing) {
+                    var line = Path()
+                    line.move(to: CGPoint(x: i, y: 0))
+                    line.addLine(to: CGPoint(x: i, y: size.height))
+                    context.stroke(line, with: .color(.gray.opacity(0.08)), lineWidth: 0.5)
+                }
+                for i in stride(from: CGFloat(0), through: size.height, by: gridSpacing) {
+                    var line = Path()
+                    line.move(to: CGPoint(x: 0, y: i))
+                    line.addLine(to: CGPoint(x: size.width, y: i))
+                    context.stroke(line, with: .color(.gray.opacity(0.08)), lineWidth: 0.5)
+                }
+
+                // Axes
+                var xAxis = Path()
+                xAxis.move(to: CGPoint(x: 0, y: center.y))
+                xAxis.addLine(to: CGPoint(x: size.width, y: center.y))
+                context.stroke(xAxis, with: .color(.gray.opacity(0.3)), lineWidth: 1)
+
+                var yAxis = Path()
+                yAxis.move(to: CGPoint(x: center.x, y: 0))
+                yAxis.addLine(to: CGPoint(x: center.x, y: size.height))
+                context.stroke(yAxis, with: .color(.gray.opacity(0.3)), lineWidth: 1)
+
+                // Draw curve
+                var curve = Path()
+
+                if equationType == .linear {
+                    let slope = value * 0.5
+                    let startY = center.y + slope * center.x
+                    let endY = center.y - slope * center.x
+                    curve.move(to: CGPoint(x: 0, y: startY))
+                    curve.addLine(to: CGPoint(x: size.width, y: endY))
+                } else {
+                    let step: CGFloat = 2
+                    for x in stride(from: CGFloat(0), through: size.width, by: step) {
+                        let normalizedX = (x - center.x) / (size.width / 4)
+                        let y = center.y - value * (normalizedX * normalizedX) * 15
+
+                        if x == 0 {
+                            curve.move(to: CGPoint(x: x, y: min(max(y, -10), size.height + 10)))
+                        } else {
+                            curve.addLine(to: CGPoint(x: x, y: min(max(y, -10), size.height + 10)))
+                        }
+                    }
+                }
+
+                context.stroke(
+                    curve,
+                    with: .color(accentColor),
+                    style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
+                )
+
+                // Ball animation
+                if showBall {
+                    let ballX = size.width * ballProgress
+                    let ballY: CGFloat
+                    if equationType == .linear {
+                        let slope = value * 0.5
+                        ballY = center.y + slope * center.x - slope * ballX
+                    } else {
+                        let normalizedX = (ballX - center.x) / (size.width / 4)
+                        ballY = center.y - value * (normalizedX * normalizedX) * 15
+                    }
+
+                    let clampedY = min(max(ballY, 4), size.height - 4)
+                    let ballRect = CGRect(x: ballX - 5, y: clampedY - 5, width: 10, height: 10)
+                    context.fill(Path(ellipseIn: ballRect), with: .color(.orange))
+                    // Glow
+                    let glowRect = CGRect(x: ballX - 8, y: clampedY - 8, width: 16, height: 16)
+                    context.fill(Path(ellipseIn: glowRect), with: .color(.orange.opacity(0.3)))
+                }
             }
         }
     }
-    
-    // MARK: - Continue Section (moved to fixed bottom bar in body)
+}
+
+// MARK: - Simple Graph Preview (kept for backward compat)
+
+struct SimpleGraphPreview: View {
+    let equationType: EquationType
+
+    var body: some View {
+        InteractiveGraphCanvas(
+            value: equationType == .quadratic ? 1.0 : 1.0,
+            equationType: equationType,
+            accentColor: equationType == .linear ? .blue : .purple
+        )
+    }
 }
 
 // MARK: - Concept Card Component
@@ -624,10 +615,9 @@ struct ConceptCard<Content: View>: View {
     let icon: String
     let iconColor: Color
     @ViewBuilder let content: Content
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
             Label {
                 Text(title)
                     .font(.subheadline)
@@ -638,8 +628,7 @@ struct ConceptCard<Content: View>: View {
                 Image(systemName: icon)
                     .foregroundStyle(iconColor)
             }
-            
-            // Content
+
             content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -689,64 +678,6 @@ struct CommonMistakeCard: View {
     }
 }
 
-// MARK: - Simple Graph Preview
-
-struct SimpleGraphPreview: View {
-    let equationType: EquationType
-    
-    var body: some View {
-        GeometryReader { geometry in
-            Canvas { context, size in
-                let center = CGPoint(x: size.width / 2, y: size.height / 2)
-                
-                // Draw axes
-                var xAxis = Path()
-                xAxis.move(to: CGPoint(x: 0, y: center.y))
-                xAxis.addLine(to: CGPoint(x: size.width, y: center.y))
-                context.stroke(xAxis, with: .color(.gray.opacity(0.3)), lineWidth: 1)
-                
-                var yAxis = Path()
-                yAxis.move(to: CGPoint(x: center.x, y: 0))
-                yAxis.addLine(to: CGPoint(x: center.x, y: size.height))
-                context.stroke(yAxis, with: .color(.gray.opacity(0.3)), lineWidth: 1)
-                
-                // Draw curve
-                var curve = Path()
-                let color: Color = equationType == .linear ? .blue : .purple
-                
-                if equationType == .linear {
-                    // Draw a line: y = x
-                    curve.move(to: CGPoint(x: 20, y: size.height - 20))
-                    curve.addLine(to: CGPoint(x: size.width - 20, y: 20))
-                } else {
-                    // Draw a parabola
-                    let step: CGFloat = 2
-                    for x in stride(from: CGFloat(0), through: size.width, by: step) {
-                        let normalizedX = (x - center.x) / (size.width / 4)
-                        let y = center.y - (normalizedX * normalizedX) * 20
-                        
-                        if x == 0 {
-                            curve.move(to: CGPoint(x: x, y: y))
-                        } else {
-                            curve.addLine(to: CGPoint(x: x, y: y))
-                        }
-                    }
-                }
-                
-                context.stroke(
-                    curve,
-                    with: .color(color),
-                    style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
-                )
-            }
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-        )
-    }
-}
-
 // MARK: - Preview
 
 #Preview("Linear Concept") {
@@ -762,9 +693,10 @@ struct SimpleGraphPreview: View {
 #Preview("Quadratic Concept") {
     NavigationStack {
         ConceptExplanationView(
-            equation: "x² + 5x + 6 = 0",
+            equation: "x\u{00B2} + 5x + 6 = 0",
             equationType: .quadratic
         )
         .environmentObject(NavigationCoordinator())
     }
 }
+#endif

@@ -5,6 +5,7 @@
 //  Animated contextual feedback strip that displays educational insights.
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Displays a contextual insight message with animation.
@@ -101,3 +102,4 @@ struct InsightStripView: View {
     }
     .padding()
 }
+#endif

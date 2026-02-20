@@ -10,6 +10,7 @@
 //  explains WHY a step works conceptually.
 //
 
+#if os(iOS)
 import Foundation
 #if canImport(FoundationModels)
 import FoundationModels
@@ -18,7 +19,7 @@ import FoundationModels
 // MARK: - Model Availability
 
 /// Checks whether the on-device Foundation Model is available.
-/// Returns false on pre-iOS 26 devices or when Apple Intelligence is disabled.
+/// Returns false on pre-iOS 26 devices or when System Intelligence is disabled.
 public func isFoundationModelAvailable() -> Bool {
     #if canImport(FoundationModels)
     if #available(iOS 26, *) {
@@ -302,7 +303,7 @@ public enum FoundationalModelError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .unavailable:
-            return "On-device AI model is not available on this device."
+            return "On-device processing is not available on this device."
         case .timeout:
             return "Explanation generation timed out."
         case .noResponse:
@@ -312,3 +313,4 @@ public enum FoundationalModelError: Error, LocalizedError {
         }
     }
 }
+#endif

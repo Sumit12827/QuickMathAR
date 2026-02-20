@@ -5,6 +5,8 @@
 //  Created on 2026-02-09.
 //
 
+#if os(iOS)
+
 import SwiftUI
 
 extension Animation {
@@ -61,3 +63,5 @@ extension Animation {
 // MARK: - Stagger Animation Modifier
 
 
+
+#endif

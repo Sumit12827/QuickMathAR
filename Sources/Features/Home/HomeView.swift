@@ -5,6 +5,7 @@
 //  Created on 2026-01-25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Main landing screen of the app
@@ -287,3 +288,4 @@ private struct JourneyStepPill: View {
     }
     .preferredColorScheme(.dark)
 }
+#endif

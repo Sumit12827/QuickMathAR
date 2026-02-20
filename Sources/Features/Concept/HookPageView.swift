@@ -5,6 +5,7 @@
 //  Full-screen hook page with animated visual and title fade-in
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// The opening hook page that captures attention
@@ -202,3 +203,4 @@ private struct ParabolaShape: Shape {
         accentColor: .blue
     )
 }
+#endif

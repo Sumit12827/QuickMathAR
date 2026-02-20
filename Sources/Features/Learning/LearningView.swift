@@ -5,6 +5,7 @@
 //  Displays structured learning content in a calm, readable format
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A view that displays educational content for equation types
@@ -124,7 +125,7 @@ struct LearningView: View {
     private var solvingApproachCard: some View {
         LearningCard(
             title: "How to Think About It",
-            icon: "brain.head.profile",
+            icon: "cpu",
             iconColor: .purple
         ) {
             Text(content.solvingMethodConcept)
@@ -534,13 +535,13 @@ struct DifficultyBadge: View {
     private var difficultyColor: Color {
         switch difficulty.lowercased() {
         case "beginner":
-            return .green
+            return Color(red: 0.2, green: 0.8, blue: 0.2)
         case "intermediate":
-            return .orange
+            return Color(red: 1.0, green: 0.6, blue: 0.0)
         case "advanced":
-            return .red
+            return Color(red: 1.0, green: 0.2, blue: 0.2)
         default:
-            return .secondary
+            return Color(white: 0.5)
         }
     }
 }
@@ -635,3 +636,4 @@ struct DifficultyBadge: View {
         )
     }
 }
+#endif

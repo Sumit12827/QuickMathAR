@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 
 // MARK: - Interactive Builder View
@@ -310,3 +311,4 @@ struct InteractiveEquationBuilderView: View {
     }
     .preferredColorScheme(.dark)
 }
+#endif

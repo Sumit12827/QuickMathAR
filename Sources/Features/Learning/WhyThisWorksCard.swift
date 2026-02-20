@@ -10,6 +10,7 @@
 //  Expanded: concept + property + analogy + "Ask Why" field
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// An expandable card showing a conceptual explanation for a solving step.
@@ -237,7 +238,7 @@ struct WhyThisWorksCard: View {
             // Memory tip (advanced level)
             if let tip = explanation.memoryTip {
                 HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "brain.head.profile")
+                    Image(systemName: "cpu")
                         .font(.caption)
                         .foregroundStyle(.purple)
                     
@@ -429,3 +430,4 @@ struct WhyThisWorksCard: View {
     .padding()
     .background(Color(.systemGroupedBackground))
 }
+#endif

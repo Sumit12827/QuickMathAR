@@ -5,6 +5,8 @@
 //  App-wide constants for consistent values across the codebase
 //
 
+#if os(iOS)
+
 import Foundation
 import SwiftUI
 
@@ -118,3 +120,5 @@ extension AppConstants {
         sizeClass == .regular ? iPadHorizontalPadding : horizontalPadding
     }
 }
+
+#endif

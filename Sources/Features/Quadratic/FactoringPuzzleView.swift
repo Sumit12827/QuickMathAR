@@ -5,6 +5,7 @@
 //  Drag-and-drop puzzle for factoring quadratics
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Interactive puzzle for learning quadratic factoring
@@ -352,3 +353,4 @@ private struct NumberTile: View {
     )
     .padding()
 }
+#endif

@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  ContentLoader.swift
 //  QuickMathsAR
@@ -276,3 +277,4 @@ public final class ContentLoader: @unchecked Sendable {
         loadUnknownContentIfNeeded()
     }
 }
+#endif

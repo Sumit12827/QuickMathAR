@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 
 struct AROverlayView: View {
@@ -175,3 +176,4 @@ struct LegendItem: View {
         }
     }
 }
+#endif

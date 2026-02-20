@@ -5,6 +5,8 @@
 //  Defines the app's color palette using system colors only
 //  Follows Apple Human Interface Guidelines for educational clarity
 //
+#if os(iOS)
+
 
 import SwiftUI
 
@@ -130,3 +132,5 @@ public extension View {
             )
     }
 }
+
+#endif

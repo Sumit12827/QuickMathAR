@@ -5,6 +5,7 @@
 //  Displays foundational arithmetic concepts in a calm, readable format
 //
 
+#if os(iOS)
 import SwiftUI
 import UIKit
 
@@ -263,3 +264,5 @@ struct ConceptualExampleCard: View {
         )
     }
 }
+
+#endif

@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  EquationLearningContent.swift
 //  QuickMathsAR
@@ -108,3 +109,4 @@ public struct EquationLearningContent: Codable, Sendable {
         self.conceptFlow = conceptFlow
     }
 }
+#endif

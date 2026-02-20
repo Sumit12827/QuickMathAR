@@ -7,6 +7,7 @@
 //  This is the single point of contact for views needing explanations.
 //
 
+#if os(iOS)
 import Foundation
 import SwiftUI
 
@@ -295,3 +296,4 @@ public final class ExplanationEngine {
         return nil
     }
 }
+#endif

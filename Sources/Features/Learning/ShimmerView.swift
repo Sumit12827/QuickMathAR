@@ -4,6 +4,7 @@
 //
 
 
+#if os(iOS)
 import SwiftUI
 
 /// Shimmer placeholder that mimics the shape of explanation content.
@@ -100,3 +101,4 @@ struct ShimmerView: View {
             .padding()
     }
 }
+#endif

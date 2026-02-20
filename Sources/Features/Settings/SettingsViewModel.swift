@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  SettingsViewModel.swift
 //  QuickMathsAR
@@ -80,3 +81,4 @@ final class SettingsViewModel: ObservableObject, ViewModelProtocol {
             .store(in: &cancellables)
     }
 }
+#endif

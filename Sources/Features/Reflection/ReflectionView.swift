@@ -5,6 +5,7 @@
 //  Closes the learning loop with key takeaways and insights
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A view that presents key takeaways after learning/AR interaction
@@ -35,6 +36,7 @@ public struct ReflectionView: View {
     @State private var showAllCards: Bool = false
     @State private var headerOpacity: Double = 0
     @State private var headerScale: Double = 0.8
+    @State private var showConfetti: Bool = false
     
     // MARK: - Computed Properties
     
@@ -87,8 +89,26 @@ public struct ReflectionView: View {
 
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Success icon with outer glow
+            // Success icon with outer glow + confetti
             ZStack {
+                // Confetti particles
+                if showConfetti {
+                    ForEach(0..<12, id: \.self) { i in
+                        Circle()
+                            .fill([Color.green, .blue, .purple, .orange, .yellow, .pink][i % 6])
+                            .frame(width: 6, height: 6)
+                            .offset(
+                                x: CGFloat.random(in: -60...60),
+                                y: CGFloat.random(in: -80...(-20))
+                            )
+                            .opacity(showConfetti ? 0 : 1)
+                            .animation(
+                                .easeOut(duration: 1.5).delay(Double(i) * 0.05),
+                                value: showConfetti
+                            )
+                    }
+                }
+
                 Circle()
                     .fill(Color.green.opacity(0.05))
                     .frame(width: 120, height: 120)
@@ -100,10 +120,11 @@ public struct ReflectionView: View {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 48))
                     .foregroundStyle(.green)
+                    .symbolEffect(.bounce, value: headerScale)
             }
             .scaleEffect(headerScale)
 
-            Text("Great Work! 🎉")
+            Text("Great Work!")
                 .font(.title2)
                 .fontWeight(.bold)
 
@@ -180,7 +201,7 @@ public struct ReflectionView: View {
                         .foregroundStyle(.secondary)
                     
                     ConnectionBubble(
-                        icon: "brain.head.profile",
+                        icon: "lightbulb.max.fill",
                         label: "Intuition",
                         color: .green
                     )
@@ -279,6 +300,9 @@ public struct ReflectionView: View {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
             headerOpacity = 1
             headerScale = 1
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            showConfetti = true
         }
     }
 
@@ -407,3 +431,4 @@ struct ConnectionBubble: View {
         .environmentObject(NavigationCoordinator())
     }
 }
+#endif

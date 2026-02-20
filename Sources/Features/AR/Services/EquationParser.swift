@@ -5,6 +5,8 @@
 //  Parses equation strings into graph-ready data
 //
 
+#if os(iOS)
+
 import Foundation
 
 /// Parses equation strings into structured equation data for graphing
@@ -363,3 +365,5 @@ public enum ParsedEquation {
         }
     }
 }
+
+#endif

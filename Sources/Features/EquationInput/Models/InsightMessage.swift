@@ -5,6 +5,8 @@
 //  Contextual educational insights generated during equation building.
 //
 
+#if os(iOS)
+
 import Foundation
 
 // MARK: - Insight Type
@@ -263,3 +265,5 @@ enum RejectionReason {
     case nothingBeforeEquals
     case powerWithoutBase
 }
+
+#endif

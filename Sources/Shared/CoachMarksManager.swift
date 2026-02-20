@@ -5,6 +5,7 @@
 //  Manages feature discovery hints using AppStorage
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Manages coach marks and feature discovery hints
@@ -217,3 +218,4 @@ public extension View {
         modifier(CoachMarkModifier(coachMark: coachMark))
     }
 }
+#endif

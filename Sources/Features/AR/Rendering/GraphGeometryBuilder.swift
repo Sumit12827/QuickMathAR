@@ -7,6 +7,7 @@
 //  Math-X -> World X, Math-Y -> World Y (height), Z provides depth.
 //
 
+#if os(iOS)
 import RealityKit
 import simd
 import UIKit
@@ -541,3 +542,5 @@ public final class GraphGeometryBuilder {
         return pointEntity
     }
 }
+
+#endif

@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 
 // MARK: - Stagger Animation Modifier
@@ -54,3 +55,4 @@ extension View {
         self.modifier(CinematicNavigationTransition())
     }
 }
+#endif

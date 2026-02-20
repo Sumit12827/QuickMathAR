@@ -6,6 +6,7 @@
 //  Provides a calm, intentional gateway into AR-based visualization
 //
 
+#if os(iOS)
 import SwiftUI
 import RealityKit
 
@@ -403,3 +404,5 @@ extension UIColor {
         graphData: GraphDataGenerator.generate(linear: LinearEquation(slope: 1, yIntercept: 0))
     )
 }
+
+#endif

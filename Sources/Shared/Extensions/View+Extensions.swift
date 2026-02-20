@@ -5,6 +5,7 @@
 //  Created on 2026-01-25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 // MARK: - Device Detection
@@ -114,6 +115,4 @@ extension View {
         }
     }
 }
-
-
-
+#endif

@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  ArithmeticConcept.swift
 //  QuickMathsAR
@@ -209,3 +210,4 @@ public enum AnyCodableValue: Codable, Sendable {
         return nil
     }
 }
+#endif

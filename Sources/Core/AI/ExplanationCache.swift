@@ -7,6 +7,7 @@
 //  entries under memory pressure without manual intervention.
 //
 
+#if os(iOS)
 import Foundation
 
 /// Caches `StepExplanation` results keyed by equation + step + level.
@@ -79,3 +80,4 @@ public final class ExplanationCache: @unchecked Sendable {
         cache.removeAllObjects()
     }
 }
+#endif

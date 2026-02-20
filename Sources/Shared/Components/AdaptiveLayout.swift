@@ -5,6 +5,7 @@
 //  Created on 2026-01-25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 // MARK: - Device Size Tier
@@ -176,4 +177,4 @@ public struct ThreeColumnNavigationLayout<Sidebar: View, Middle: View, Detail: V
     }
     .environment(\.horizontalSizeClass, .regular)
 }
-
+#endif

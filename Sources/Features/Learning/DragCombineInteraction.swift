@@ -5,6 +5,7 @@
 //  Interactive addition: drag two groups together to combine them
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct DragCombineInteraction: View {
@@ -210,3 +211,4 @@ private struct MergedGroupView: View {
     DragCombineInteraction(config: nil, onComplete: {})
         .padding()
 }
+#endif

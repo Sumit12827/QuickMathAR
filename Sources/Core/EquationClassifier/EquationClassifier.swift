@@ -1,4 +1,4 @@
-
+#if os(iOS)
 
 //
 //  EquationClassifier.swift
@@ -629,3 +629,4 @@ public struct EquationClassifier {
         return false
     }
 }
+#endif

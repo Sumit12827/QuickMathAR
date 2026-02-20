@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 
 struct ConceptSlider: View {
@@ -119,3 +120,4 @@ struct ConceptSlider: View {
         .padding()
         .preferredColorScheme(.dark)
 }
+#endif

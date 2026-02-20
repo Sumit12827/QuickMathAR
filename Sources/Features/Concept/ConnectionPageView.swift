@@ -5,6 +5,7 @@
 //  Displays real-world application scenarios as tappable cards
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Connection page showing real-world applications
@@ -134,3 +135,4 @@ private struct ScenarioCard: View {
     )
     .padding()
 }
+#endif

@@ -8,6 +8,7 @@
 //  is always functional.
 //
 
+#if os(iOS)
 import Foundation
 
 /// Maps existing JSON `SolvingStep` reasoning data into
@@ -118,3 +119,4 @@ public struct FallbackExplanationProvider: Sendable {
         }
     }
 }
+#endif

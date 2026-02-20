@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 
 struct QuizFeedbackView: View {
@@ -131,3 +132,4 @@ struct QuizOptionButton: View {
         return isSelected ? DesignSystem.Colors.tint : .clear
     }
 }
+#endif

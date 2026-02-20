@@ -6,57 +6,48 @@
 //  Uses EquationStepGenerator for dynamic steps and a global DetailLevelSelector.
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Container view that displays a step-by-step solution for the user's
 /// specific equation, with a global detail level selector, step progress
-/// indicator, and interactive elements.
+/// indicator, and one-step-at-a-time focused display.
 public struct LearningContainerView: View {
-    
+
     // MARK: - Properties
-    
+
     public let equation: String
     public let equationType: EquationType
-    
+
     public init(equation: String, equationType: EquationType) {
         self.equation = equation
         self.equationType = equationType
     }
-    
+
     // MARK: - Environment
-    
+
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    
+
     // MARK: - State
-    
-    /// Global detail level controlling all step explanations
+
     @State private var detailLevel: ExplanationLevel = .intermediate
-    
-    /// Dynamically generated steps for this specific equation
     @State private var steps: [SolvingStep] = []
-    
-    /// Fallback: content from JSON if dynamic generation fails
     @State private var content: EquationLearningContent?
-    
     @State private var isLoading: Bool = true
     @State private var loadError: Bool = false
     @State private var currentStepIndex: Int = 0
-    @State private var showPredictionQuestion: Bool = false
-    @State private var selectedPrediction: String?
     @State private var hasCompletedExample: Bool = false
-    @State private var sliderValue: Double = 1.0
     @State private var explanationEngine = ExplanationEngine()
-    
-    /// Whether dynamic steps are being used (vs JSON fallback)
     @State private var usingDynamicSteps: Bool = false
-    
+    @State private var expandedWhyStep: Int? = nil
+
     // MARK: - Computed Properties
-    
+
     private var horizontalPadding: CGFloat {
         horizontalSizeClass == .regular ? 48 : 20
     }
-    
+
     private var accentColor: Color {
         switch equationType {
         case .linear: return .blue
@@ -65,21 +56,18 @@ public struct LearningContainerView: View {
         default: return .orange
         }
     }
-    
+
     private var currentExample: LearningExample? {
         content?.examples.first
     }
-    
-    /// The steps to display — either dynamically generated or from JSON
+
     private var displaySteps: [SolvingStep] {
-        if usingDynamicSteps {
-            return steps
-        }
+        if usingDynamicSteps { return steps }
         return currentExample?.steps ?? []
     }
-    
+
     // MARK: - Body
-    
+
     public var body: some View {
         VStack(spacing: 0) {
             // Sticky detail level selector
@@ -87,60 +75,46 @@ public struct LearningContainerView: View {
                 selectedLevel: $detailLevel,
                 isAIAvailable: isFoundationModelAvailable()
             )
-            
+
             ScrollView {
                 VStack(spacing: 24) {
                     if !steps.isEmpty || content != nil {
-                        // Header with equation
                         headerSection
-                        
-                        // Step progress indicator
                         stepProgressIndicator
-                        
-                        // Interactive slope/coefficient demo
-                        if equationType == .linear || equationType == .quadratic {
-                            interactiveSliderSection
-                        }
-                        
-                        // Prediction question
-                        if showPredictionQuestion {
-                            predictionQuestionCard
-                        }
-                        
-                        // Step-by-step solution
-                        stepByStepSection
-                        
-                        // Completion message
+
+                        // One-step-at-a-time focused display
+                        focusedStepSection
+
+                        // Step navigation list (collapsed)
+                        stepNavigationList
+
                         if hasCompletedExample {
                             completionMessage
                         }
-                        
                     } else if isLoading {
                         loadingView
                     } else {
                         errorView
                     }
-                    
+
                     Spacer(minLength: 20)
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, 24)
             }
-            
+
             // Fixed bottom action bar
             if !steps.isEmpty || content != nil {
                 FixedBottomActionBar(accentColor: accentColor) {
                     HStack(spacing: 8) {
-                        Image(systemName: hasCompletedExample ? "arkit" : "sparkles")
-                        Text(hasCompletedExample ? "See It in AR" : "Explore the steps above")
+                        Image(systemName: hasCompletedExample ? "arkit" : "arrow.right")
+                        Text(hasCompletedExample ? "See It in AR" : "Next Step")
                     }
                 } primaryAction: {
                     if hasCompletedExample {
                         navigationCoordinator.push(.arVisualization(equation: equation, type: equationType))
                     } else {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            hasCompletedExample = true
-                        }
+                        advanceStep()
                     }
                 } secondaryLabel: {
                     Text("Jump to Takeaways")
@@ -157,15 +131,15 @@ public struct LearningContainerView: View {
             loadContent()
         }
     }
-    
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         VStack(spacing: 12) {
             HStack {
                 Image(systemName: equationType == .linear ? "line.diagonal" : "point.topleft.down.to.point.bottomright.curvepath")
                     .foregroundStyle(accentColor)
-                
+
                 Text("Your Equation")
                     .font(.subheadline)
                     .fontWeight(.medium)
@@ -177,22 +151,22 @@ public struct LearningContainerView: View {
                 Capsule()
                     .fill(accentColor.opacity(0.1))
             )
-            
+
             Text(equation)
                 .font(.system(size: 28, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
                 .safeTitle(minScale: 0.6)
-            
+
             if usingDynamicSteps {
-                Label("Steps generated for your equation", systemImage: "sparkles")
+                Label("Steps generated for your equation", systemImage: "cpu")
                     .font(.caption2)
                     .foregroundStyle(.purple.opacity(0.8))
             }
         }
     }
-    
+
     // MARK: - Step Progress Indicator
-    
+
     private var stepProgressIndicator: some View {
         VStack(spacing: 8) {
             HStack {
@@ -200,21 +174,20 @@ public struct LearningContainerView: View {
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
-                
+
                 Spacer()
-                
+
                 Text("\(progressPercent)%")
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundStyle(accentColor)
             }
-            
-            // Progress bar
+
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color(.tertiarySystemGroupedBackground))
-                    
+
                     RoundedRectangle(cornerRadius: 4)
                         .fill(accentColor)
                         .frame(width: geometry.size.width * progressFraction)
@@ -230,110 +203,297 @@ public struct LearningContainerView: View {
                 .fill(Color(.secondarySystemGroupedBackground))
         )
     }
-    
+
     private var progressPercent: Int {
         guard !displaySteps.isEmpty else { return 0 }
         return Int((Double(currentStepIndex + 1) / Double(displaySteps.count)) * 100)
     }
-    
+
     private var progressFraction: CGFloat {
         guard !displaySteps.isEmpty else { return 0 }
         return CGFloat(currentStepIndex + 1) / CGFloat(displaySteps.count)
     }
-    
-    // MARK: - Step-by-Step Section
-    
-    private var stepByStepSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Section header
-            Label {
-                Text("Step-by-Step Solution")
+
+    // MARK: - Focused Step Section (One Step at a Time)
+
+    private var focusedStepSection: some View {
+        Group {
+            if currentStepIndex < displaySteps.count {
+                let step = displaySteps[currentStepIndex]
+                let previousResult: String? = currentStepIndex > 0 ? displaySteps[currentStepIndex - 1].result : nil
+
+                VStack(alignment: .leading, spacing: 16) {
+                    // Step number + title
+                    stepHeader(step: step)
+
+                    // Math content
+                    stepMathContent(previousResult: previousResult, step: step)
+
+                    // Reasoning at current detail level
+                    let reasoning: String = reasoningText(for: step)
+                    if !reasoning.isEmpty {
+                        reasoningView(text: reasoning)
+                    }
+
+                    // Expandable "Why this works?"
+                    whyThisWorksSection(step: step)
+
+                    // Navigation buttons
+                    navigationButtons()
+                }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(accentColor.opacity(0.2), lineWidth: 1)
+                )
+                .id("step-\(currentStepIndex)")
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .leading).combined(with: .opacity)
+                ))
+            }
+        }
+    }
+
+    // MARK: - Focused Step Helpers
+
+    @ViewBuilder
+    private func stepHeader(step: SolvingStep) -> some View {
+        HStack(spacing: 12) {
+            Text("\(currentStepIndex + 1)")
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+                .background(
+                    Circle()
+                        .fill(accentColor)
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Step \(currentStepIndex + 1)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text(step.action)
                     .font(.headline)
-                    .safeTitle(minScale: 0.85, alignment: .leading)
-            } icon: {
-                Image(systemName: "list.number")
-                    .foregroundStyle(accentColor)
-            }
-            
-            // Definition (from JSON content if available)
-            if let content = content {
-                LearningCard(
-                    title: "What You're Learning",
-                    icon: "lightbulb",
-                    iconColor: .yellow
-                ) {
-                    Text(content.definition)
-                        .font(.body)
-                        .lineSpacing(4)
-                }
-            }
-            
-            // Steps
-            ForEach(Array(displaySteps.enumerated()), id: \.element.id) { index, step in
-                let previousResult: String? = index > 0 ? displaySteps[index - 1].result : nil
-                
-                VStack(alignment: .leading, spacing: 0) {
-                    StepCard(
-                        step: step,
-                        isKeyStep: step.arithmeticConceptUsed != nil,
-                        accentColor: accentColor,
-                        equation: equation,
-                        totalSteps: displaySteps.count,
-                        previousStepResult: previousResult,
-                        explanationEngine: explanationEngine
-                    )
-                    
-                    // Reasoning text at selected detail level
-                    stepReasoningView(step: step)
-                }
-                .onAppear {
-                    if index > currentStepIndex {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            currentStepIndex = index
-                        }
-                    }
-                    
-                    // Mark complete on last step
-                    if index == displaySteps.count - 1 {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                hasCompletedExample = true
-                            }
-                        }
-                    }
-                }
+                    .foregroundStyle(.primary)
+                    .safeTitle(minScale: 0.8, alignment: .leading)
             }
         }
     }
-    
-    // MARK: - Step Reasoning (Detail-Level Aware)
-    
-    private func stepReasoningView(step: SolvingStep) -> some View {
-        let text = reasoningText(for: step)
-        
-        return Group {
-            if !text.isEmpty {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: detailLevel == .beginner ? "text.bubble" : detailLevel == .intermediate ? "brain" : "book.closed")
-                        .font(.caption)
-                        .foregroundStyle(accentColor.opacity(0.6))
-                        .frame(width: 20)
-                    
-                    Text(text)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineSpacing(3)
-                        .safeCaption(alignment: .leading)
-                }
+
+    @ViewBuilder
+    private func stepMathContent(previousResult: String?, step: SolvingStep) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let prev = previousResult {
+                Text(prev)
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(step.result ?? step.action)
+                .font(.system(size: 22, weight: .medium, design: .rounded))
+                .foregroundStyle(.primary)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                )
+        }
+    }
+
+    @ViewBuilder
+    private func reasoningView(text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: detailLevelIcon)
+                .font(.caption)
+                .foregroundStyle(accentColor.opacity(0.6))
+                .frame(width: 20)
+
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineSpacing(3)
+                .safeCaption(alignment: .leading)
+        }
+        .animation(.easeInOut(duration: 0.2), value: detailLevel)
+    }
+
+    @ViewBuilder
+    private func whyThisWorksSection(step: SolvingStep) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                expandedWhyStep = expandedWhyStep == step.id ? nil : step.id
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: expandedWhyStep == step.id ? "chevron.up" : "questionmark.circle")
+                    .font(.caption)
+                Text(expandedWhyStep == step.id ? "Hide explanation" : "Why this works?")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundStyle(accentColor)
+        }
+        .buttonStyle(.plain)
+
+        if expandedWhyStep == step.id {
+            Text(whyThisWorks(step: step))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(accentColor.opacity(0.05))
+                )
                 .transition(.opacity.combined(with: .move(edge: .top)))
-                .animation(.easeInOut(duration: 0.2), value: detailLevel)
-                .id("\(step.id)-\(detailLevel.rawValue)")
+        }
+    }
+
+    @ViewBuilder
+    private func navigationButtons() -> some View {
+        HStack(spacing: 12) {
+            if currentStepIndex > 0 {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        currentStepIndex -= 1
+                    }
+                    HapticManager.shared.light()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Previous")
+                    }
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(accentColor)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(accentColor.opacity(0.1))
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer()
+
+            if currentStepIndex < displaySteps.count - 1 {
+                Button {
+                    advanceStep()
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("Next Step")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(accentColor)
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
     }
-    
+
+    private var detailLevelIcon: String {
+        switch detailLevel {
+        case .beginner: return "text.bubble"
+        case .intermediate: return "book.closed"
+        case .advanced: return "graduationcap"
+        }
+    }
+
+    private func advanceStep() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if currentStepIndex < displaySteps.count - 1 {
+                currentStepIndex += 1
+            } else {
+                hasCompletedExample = true
+            }
+        }
+        HapticManager.shared.light()
+    }
+
+    // MARK: - Step Navigation List (Collapsed)
+
+    private var stepNavigationList: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(Array(displaySteps.indices), id: \.self) { index in
+                let step = displaySteps[index]
+                let isPast = index < currentStepIndex
+                let isCurrent = index == currentStepIndex
+
+                StepNavigationRow(
+                    title: step.action,
+                    isPast: isPast,
+                    isCurrent: isCurrent,
+                    accentColor: accentColor
+                ) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        currentStepIndex = index
+                    }
+                    HapticManager.shared.light()
+                }
+                .disabled(index > currentStepIndex)
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+
+    private struct StepNavigationRow: View {
+        let title: String
+        let isPast: Bool
+        let isCurrent: Bool
+        let accentColor: Color
+        let action: () -> Void
+
+        var body: some View {
+            Button(action: action) {
+                HStack(spacing: 10) {
+                    Image(systemName: isPast ? "checkmark.circle.fill" : (isCurrent ? "circle.inset.filled" : "circle"))
+                        .font(.caption)
+                        .foregroundStyle(isPast || isCurrent ? AnyShapeStyle(accentColor) : AnyShapeStyle(.tertiary))
+
+                    Text(title)
+                        .font(.caption)
+                        .fontWeight(isCurrent ? .semibold : .regular)
+                        .foregroundStyle(isPast || isCurrent ? AnyShapeStyle(.primary) : AnyShapeStyle(.tertiary))
+                        .lineLimit(1)
+
+                    Spacer()
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(isCurrent ? accentColor.opacity(0.06) : .clear)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: - Step Reasoning (Detail-Level Aware)
+
     private func reasoningText(for step: SolvingStep) -> String {
         switch detailLevel {
         case .beginner:
@@ -343,246 +503,35 @@ public struct LearningContainerView: View {
         case .advanced:
             let detailed = step.reasoning.detailedText ?? step.reasoning.text
             if let metaphor = step.reasoning.metaphorText {
-                return "\(detailed)\n\n💡 \(metaphor)"
+                return "\(detailed)\n\n\(metaphor)"
             }
             return detailed
         }
     }
-    
-    // MARK: - Interactive Slider Section
 
-    private var interactiveSliderSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Label {
-                Text("Explore: What happens when values change?")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-            } icon: {
-                Image(systemName: "slider.horizontal.3")
-                    .foregroundStyle(accentColor)
+    private func whyThisWorks(step: SolvingStep) -> String {
+        switch detailLevel {
+        case .beginner:
+            return step.reasoning.metaphorText ?? step.reasoning.text
+        case .intermediate:
+            return step.reasoning.detailedText ?? step.reasoning.text
+        case .advanced:
+            var result = step.reasoning.detailedText ?? step.reasoning.text
+            if let metaphor = step.reasoning.metaphorText {
+                result += "\n\n\(metaphor)"
             }
-
-            VStack(spacing: 12) {
-                HStack {
-                    Text(equationType == .linear ? "Slope" : "Coefficient 'a'")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Slider(value: $sliderValue, in: -3...3, step: 0.5)
-                        .tint(accentColor)
-                        .accessibilityLabel(equationType == .linear ? "Slope" : "Coefficient a")
-                        .accessibilityValue(String(format: "%.1f", sliderValue))
-                        .accessibilityHint("Adjust to see how it affects the graph")
-
-                    Text(String(format: "%.1f", sliderValue))
-                        .font(.system(.caption, design: .monospaced))
-                        .fontWeight(.semibold)
-                        .foregroundStyle(accentColor)
-                        .frame(width: 44)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(accentColor.opacity(0.1))
-                        )
-                        .accessibilityHidden(true)
-                }
-
-                InteractiveGraphPreview(value: sliderValue, equationType: equationType)
-                    .frame(height: 120)
-
-                HStack(spacing: 8) {
-                    Image(systemName: sliderInsightIcon)
-                        .font(.caption)
-                        .foregroundStyle(accentColor)
-
-                    Text(sliderInsight)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 4)
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(.secondarySystemGroupedBackground))
-            )
-        }
-        .onChange(of: sliderValue) { oldValue, newValue in
-            if (oldValue < 0 && newValue >= 0) || (oldValue >= 0 && newValue < 0) {
-                HapticManager.shared.medium()
-            }
-            else if abs(newValue.truncatingRemainder(dividingBy: 1.0)) < 0.05 {
-                HapticManager.shared.light()
-            }
-
-            if abs(newValue) > 1.5 && !showPredictionQuestion && !hasCompletedExample {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    showPredictionQuestion = true
-                }
-            }
+            return result
         }
     }
 
-    private var sliderInsightIcon: String {
-        if equationType == .linear {
-            if sliderValue > 1 {
-                return "arrow.up.right"
-            } else if sliderValue < -1 {
-                return "arrow.down.right"
-            } else if abs(sliderValue) < 0.3 {
-                return "arrow.right"
-            } else {
-                return "line.diagonal"
-            }
-        } else {
-            if sliderValue > 0.5 {
-                return "arrow.up.to.line"
-            } else if sliderValue < -0.5 {
-                return "arrow.down.to.line"
-            } else {
-                return "minus"
-            }
-        }
-    }
-    
-    private var sliderInsight: String {
-        if equationType == .linear {
-            switch sliderValue {
-            case let x where x > 2:
-                return "Very steep upward slope — the line rises quickly!"
-            case let x where x > 0.5:
-                return "Rising gently — for every step right, you go up"
-            case let x where x > -0.5:
-                return "Nearly horizontal — very little change in y"
-            case let x where x > -2:
-                return "Declining — the line falls as you move right"
-            default:
-                return "Very steep downward slope — drops quickly!"
-            }
-        } else {
-            switch sliderValue {
-            case let x where x > 1.5:
-                return "Opens up sharply — narrow parabola with steep sides"
-            case let x where x > 0.5:
-                return "Opens upward — standard U-shaped curve"
-            case let x where x > -0.5:
-                return "Nearly flat — approaching a straight line"
-            case let x where x > -1.5:
-                return "Opens downward — inverted U-shape"
-            default:
-                return "Opens down sharply — narrow inverted parabola"
-            }
-        }
-    }
-    
-    // MARK: - Prediction Question
-    
-    private var predictionQuestionCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            predictionHeader
-            
-            Text(predictionQuestion)
-                .font(.body)
-                .foregroundStyle(.primary)
-            
-            predictionOptionsList
-            
-            predictionFeedback
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.orange.opacity(0.08))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.orange.opacity(0.2), lineWidth: 1)
-        )
-    }
-    
-    private var predictionHeader: some View {
-        HStack {
-            Image(systemName: "questionmark.bubble.fill")
-                .foregroundStyle(.orange)
-            
-            Text("Think About It")
-                .font(.headline)
-        }
-    }
-    
-    private var predictionOptionsList: some View {
-        VStack(spacing: 8) {
-            ForEach(predictionOptions, id: \.self) { option in
-                PredictionOptionButton(
-                    text: option,
-                    isSelected: selectedPrediction == option,
-                    isCorrect: option == correctPrediction && selectedPrediction != nil,
-                    accentColor: accentColor
-                ) {
-                    handlePredictionSelected(option)
-                }
-            }
-        }
-    }
-    
-    private var predictionFeedback: some View {
-        Group {
-            if let selected = selectedPrediction {
-                Text(selected == correctPrediction ? "Correct! 🎉" : "Not quite, but great thinking! The answer is highlighted above.")
-                    .font(.caption)
-                    .foregroundStyle(selected == correctPrediction ? .green : .orange)
-                    .padding(.top, 4)
-            }
-        }
-    }
-    
-    private func handlePredictionSelected(_ option: String) {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            selectedPrediction = option
-        }
-
-        if option == correctPrediction {
-            HapticManager.shared.play(.success)
-        } else {
-            HapticManager.shared.play(.warning)
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                hasCompletedExample = true
-            }
-        }
-    }
-    
-    private var predictionQuestion: String {
-        equationType == .linear
-            ? "If we double the slope, what happens to the line?"
-            : "If we make 'a' negative, what happens to the parabola?"
-    }
-    
-    private var predictionOptions: [String] {
-        equationType == .linear
-            ? ["It becomes twice as steep", "It moves up", "It becomes horizontal", "Nothing changes"]
-            : ["It flips upside down", "It gets wider", "It moves right", "Nothing changes"]
-    }
-    
-    private var correctPrediction: String {
-        equationType == .linear
-            ? "It becomes twice as steep"
-            : "It flips upside down"
-    }
-    
     // MARK: - Completion Message
-    
+
     private var completionMessage: some View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.title)
                 .foregroundStyle(.green)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text("Great Progress!")
                     .font(.headline)
@@ -598,7 +547,7 @@ public struct LearningContainerView: View {
                 .fill(Color.green.opacity(0.1))
         )
     }
-    
+
     // MARK: - Loading View
 
     private var loadingView: some View {
@@ -607,11 +556,11 @@ public struct LearningContainerView: View {
                 .scaleEffect(1.2)
 
             VStack(spacing: 8) {
-                Text("Generating solution steps...")
+                Text("Preparing solution steps...")
                     .font(.headline)
                     .foregroundStyle(.primary)
 
-                Text("Preparing a step-by-step walkthrough for your equation")
+                Text("Building a step-by-step walkthrough for your equation")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -654,13 +603,12 @@ public struct LearningContainerView: View {
     }
 
     // MARK: - Content Loading
-    
+
     private func loadContent() {
         isLoading = true
         loadError = false
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            // Step 1: Try dynamic step generation for the user's equation
             let generator = EquationStepGenerator()
             if let dynamicSteps = generator.generateSteps(equation: equation, type: equationType),
                !dynamicSteps.isEmpty {
@@ -669,12 +617,10 @@ public struct LearningContainerView: View {
                     usingDynamicSteps = true
                     isLoading = false
                 }
-                // Also load JSON content for definitions/concepts
                 content = ContentLoader.shared.getEquationContent(for: equationType)
                 return
             }
-            
-            // Step 2: Fallback to JSON content
+
             let loadedContent = ContentLoader.shared.getEquationContent(for: equationType)
             withAnimation(.easeInOut(duration: 0.2)) {
                 content = loadedContent
@@ -683,7 +629,7 @@ public struct LearningContainerView: View {
             }
         }
     }
-    
+
     private func generateInsights() -> [String] {
         switch equationType {
         case .linear:
@@ -716,67 +662,7 @@ public struct LearningContainerView: View {
     }
 }
 
-// MARK: - Interactive Graph Preview
-
-struct InteractiveGraphPreview: View {
-    let value: Double
-    let equationType: EquationType
-    
-    var body: some View {
-        GeometryReader { geometry in
-            Canvas { context, size in
-                let center = CGPoint(x: size.width / 2, y: size.height / 2)
-                
-                // Draw axes
-                var xAxis = Path()
-                xAxis.move(to: CGPoint(x: 0, y: center.y))
-                xAxis.addLine(to: CGPoint(x: size.width, y: center.y))
-                context.stroke(xAxis, with: .color(.gray.opacity(0.3)), lineWidth: 1)
-                
-                var yAxis = Path()
-                yAxis.move(to: CGPoint(x: center.x, y: 0))
-                yAxis.addLine(to: CGPoint(x: center.x, y: size.height))
-                context.stroke(yAxis, with: .color(.gray.opacity(0.3)), lineWidth: 1)
-                
-                // Draw curve based on value
-                var curve = Path()
-                let color: Color = equationType == .linear ? .blue : .purple
-                
-                if equationType == .linear {
-                    let slope = value * 0.5
-                    let startY = center.y + slope * center.x
-                    let endY = center.y - slope * center.x
-                    curve.move(to: CGPoint(x: 0, y: startY))
-                    curve.addLine(to: CGPoint(x: size.width, y: endY))
-                } else {
-                    let step: CGFloat = 2
-                    for x in stride(from: CGFloat(0), through: size.width, by: step) {
-                        let normalizedX = (x - center.x) / (size.width / 4)
-                        let y = center.y - value * (normalizedX * normalizedX) * 15
-                        
-                        if x == 0 {
-                            curve.move(to: CGPoint(x: x, y: y))
-                        } else {
-                            curve.addLine(to: CGPoint(x: x, y: y))
-                        }
-                    }
-                }
-                
-                context.stroke(
-                    curve,
-                    with: .color(color),
-                    style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
-                )
-            }
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-        )
-    }
-}
-
-// MARK: - Prediction Option Button
+// MARK: - Prediction Option Button (kept for potential reuse)
 
 struct PredictionOptionButton: View {
     let text: String
@@ -784,16 +670,16 @@ struct PredictionOptionButton: View {
     let isCorrect: Bool
     let accentColor: Color
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack {
                 Text(text)
                     .font(.subheadline)
                     .foregroundStyle(isSelected ? .white : .primary)
-                
+
                 Spacer()
-                
+
                 if isSelected {
                     Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundStyle(.white)
@@ -811,7 +697,7 @@ struct PredictionOptionButton: View {
         .buttonStyle(.plain)
         .disabled(isSelected && !isCorrect)
     }
-    
+
     private var backgroundColor: Color {
         if isSelected {
             return isCorrect ? .green : .red.opacity(0.7)
@@ -886,6 +772,21 @@ struct KeyInsightCard: View {
     }
 }
 
+// MARK: - Interactive Graph Preview (kept for backward compat)
+
+struct InteractiveGraphPreview: View {
+    let value: Double
+    let equationType: EquationType
+
+    var body: some View {
+        InteractiveGraphCanvas(
+            value: value,
+            equationType: equationType,
+            accentColor: equationType == .linear ? .blue : .purple
+        )
+    }
+}
+
 // MARK: - Preview
 
 #Preview("Learning Container - Linear") {
@@ -901,9 +802,11 @@ struct KeyInsightCard: View {
 #Preview("Learning Container - Quadratic") {
     NavigationStack {
         LearningContainerView(
-            equation: "x² + 5x + 6 = 0",
+            equation: "x\u{00B2} + 5x + 6 = 0",
             equationType: .quadratic
         )
         .environmentObject(NavigationCoordinator())
     }
 }
+#endif
+

@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  DependencyContainer.swift
 //  QuickMathsAR
@@ -40,3 +41,4 @@ final class DependencyContainer: ObservableObject {
         SettingsViewModel()
     }
 }
+#endif

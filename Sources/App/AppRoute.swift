@@ -5,6 +5,7 @@
 //  Created on 2026-01-25.
 //
 
+#if os(iOS)
 import Foundation
 
 /// Defines all navigable routes in the application
@@ -36,3 +37,4 @@ enum AppRoute: Hashable, Identifiable {
         }
     }
 }
+#endif

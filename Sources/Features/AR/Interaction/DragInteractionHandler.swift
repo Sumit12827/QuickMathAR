@@ -5,6 +5,7 @@
 //  Handles drag-along-curve gesture for exploring graph
 //
 
+#if os(iOS)
 import UIKit
 import RealityKit
 import simd
@@ -261,3 +262,5 @@ public final class DragInteractionHandler: NSObject {
         state.cancelDrag()
     }
 }
+
+#endif

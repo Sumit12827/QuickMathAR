@@ -5,6 +5,7 @@
 //  Created on 2026-02-09.
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct ManualEquationInputView: View {
@@ -213,3 +214,4 @@ struct ManualEquationInputView: View {
         print("Completed: \(equation)")
     }
 }
+#endif

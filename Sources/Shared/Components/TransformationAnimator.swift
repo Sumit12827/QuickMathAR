@@ -5,6 +5,7 @@
 //  Animates equation transformations for step-by-step solving
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Animation phase for transformation animations
@@ -197,3 +198,4 @@ private struct AnimationModifier: ViewModifier {
     }
     .padding()
 }
+#endif

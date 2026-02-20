@@ -5,6 +5,8 @@
 //  Defines consistent spacing, sizing, and layout metrics
 //
 
+#if os(iOS)
+
 import SwiftUI
 
 // MARK: - App Metrics
@@ -134,3 +136,5 @@ public extension View {
         self.frame(maxWidth: AppMetrics.maxReadableWidth)
     }
 }
+
+#endif

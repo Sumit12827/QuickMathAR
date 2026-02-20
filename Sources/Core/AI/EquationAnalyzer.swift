@@ -7,6 +7,7 @@
 //  with AI-generated insights (what it does, real-world analogy).
 //
 
+#if os(iOS)
 import Foundation
 import SwiftUI
 
@@ -22,7 +23,7 @@ public final class EquationAnalyzer: ObservableObject {
     
     // MARK: - Public API
     
-    /// Analyze the given equation asynchronously.
+    /// Analyze the given equation asynchronously using on-device processing.
     /// Updates `state` through `.analyzing` → `.completed` or `.failed`.
     public func analyze(equation: String, type: EquationType) {
         guard case .idle = state else { return }
@@ -95,7 +96,7 @@ public final class EquationAnalyzer: ObservableObject {
     }
     
     private func generateAIInsights(equation: String, type: EquationType, parsed: ParsedEquation?) async -> AIInsights {
-        // Try Apple Intelligence first (iOS 26+)
+        // Try System Intelligence first (iOS 26+)
         if #available(iOS 26, *) {
             do {
                 let service = FoundationalModelService()
@@ -292,3 +293,4 @@ public final class EquationAnalyzer: ObservableObject {
         return String(format: "%.2g", value)
     }
 }
+#endif

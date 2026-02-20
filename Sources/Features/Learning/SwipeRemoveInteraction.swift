@@ -5,6 +5,7 @@
 //  Interactive subtraction: swipe items away to remove them
 //
 
+#if os(iOS)
 import SwiftUI
 import UIKit
 
@@ -165,3 +166,5 @@ private struct ItemBubble: View {
     SwipeRemoveInteraction(config: nil, onComplete: {})
         .padding()
 }
+
+#endif

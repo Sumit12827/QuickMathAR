@@ -5,6 +5,7 @@
 //  Mini-quiz component for testing understanding
 //
 
+#if os(iOS)
 import SwiftUI
 import UIKit
 
@@ -192,3 +193,5 @@ private struct FeedbackBanner: View {
     )
     .padding()
 }
+
+#endif

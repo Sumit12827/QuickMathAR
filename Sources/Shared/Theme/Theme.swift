@@ -6,6 +6,7 @@
 //  Import this file to access the entire design system
 //
 
+#if os(iOS)
 import SwiftUI
 
 // MARK: - Theme
@@ -145,3 +146,4 @@ public extension View {
         self.buttonStyle(SecondaryButtonStyle())
     }
 }
+#endif

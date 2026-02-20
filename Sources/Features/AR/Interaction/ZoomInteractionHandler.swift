@@ -5,6 +5,7 @@
 //  Handles pinch-to-zoom gesture for graph scaling
 //
 
+#if os(iOS)
 import UIKit
 import RealityKit
 
@@ -131,3 +132,5 @@ public final class ZoomInteractionHandler: NSObject {
         return graphEntity != nil
     }
 }
+
+#endif

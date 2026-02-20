@@ -5,6 +5,7 @@
 //  Interactive step-through for order of operations
 //
 
+#if os(iOS)
 import SwiftUI
 import UIKit
 
@@ -202,3 +203,5 @@ private struct OperationStep {
     StepThroughInteraction(config: nil, onComplete: {})
         .padding()
 }
+
+#endif

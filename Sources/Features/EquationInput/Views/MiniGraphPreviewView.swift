@@ -5,6 +5,7 @@
 //  Compact live graph preview during equation building.
 
 
+#if os(iOS)
 import SwiftUI
 
 
@@ -155,3 +156,4 @@ struct MiniGraphPreviewView: View {
     }
     .padding()
 }
+#endif

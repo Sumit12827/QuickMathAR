@@ -5,6 +5,8 @@
 //  Created on 2026-02-09.
 //
 
+#if os(iOS)
+
 import Foundation
 
 /// Validation state for equations
@@ -131,3 +133,5 @@ struct EquationValidator {
         return !leftSide.isEmpty && !rightSide.isEmpty
     }
 }
+
+#endif

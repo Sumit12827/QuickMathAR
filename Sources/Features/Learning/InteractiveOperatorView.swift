@@ -5,6 +5,7 @@
 //  Container view that renders the appropriate interaction based on concept type
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct InteractiveOperatorView: View {
@@ -136,3 +137,4 @@ private struct StaticConceptDisplay: View {
     )
     .padding()
 }
+#endif

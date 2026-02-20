@@ -5,6 +5,7 @@
 //  Displays the mission framing for a learning example
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A view that displays the before → after mission framing with narrative text
@@ -99,3 +100,4 @@ public struct MissionStatementView: View {
     )
     .padding()
 }
+#endif

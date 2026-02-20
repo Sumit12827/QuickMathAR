@@ -5,6 +5,7 @@
 //  Interactive division: drag items into equal groups
 //
 
+#if os(iOS)
 import SwiftUI
 import UIKit
 
@@ -217,3 +218,5 @@ private struct DraggableItem: View {
     DragDistributeInteraction(config: nil, onComplete: {})
         .padding()
 }
+
+#endif

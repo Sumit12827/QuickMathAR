@@ -7,6 +7,7 @@
 //  Supports pinch-to-scale and rotation gestures after placement.
 //
 
+#if os(iOS)
 import UIKit
 import RealityKit
 import ARKit
@@ -618,3 +619,4 @@ public enum ARGraphError: Error, LocalizedError {
         }
     }
 }
+#endif

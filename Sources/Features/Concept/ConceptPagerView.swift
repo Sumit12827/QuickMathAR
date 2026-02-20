@@ -5,6 +5,7 @@
 //  Horizontal paging container for concept flow pages
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A view that displays concept flow pages in a horizontal pager
@@ -142,3 +143,4 @@ private struct GenericPageView: View {
         accentColor: .blue
     )
 }
+#endif

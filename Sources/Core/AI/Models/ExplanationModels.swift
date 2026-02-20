@@ -7,6 +7,7 @@
 //  conceptual explanations from the Foundation Model.
 //
 
+#if os(iOS)
 import Foundation
 
 // MARK: - Explanation Level
@@ -160,3 +161,4 @@ public enum ExplanationState: Sendable, Equatable {
         return false
     }
 }
+#endif

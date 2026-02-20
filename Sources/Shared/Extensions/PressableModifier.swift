@@ -6,6 +6,7 @@
 //  Tap → Scale 0.96, opacity 0.92.  Long-press → Scale 0.92, opacity 0.90.
 //
 
+#if os(iOS)
 import SwiftUI
 
 // MARK: - Pressable Modifier
@@ -62,3 +63,4 @@ public extension View {
         modifier(DeepPressableModifier())
     }
 }
+#endif

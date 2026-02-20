@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  UnknownEquationContent.swift
 //  QuickMathsAR
@@ -51,3 +52,4 @@ public struct UnknownEquationContent: Codable, Sendable {
     /// Whether AR visualization is available (typically false for unknown)
     public let arAvailable: Bool
 }
+#endif

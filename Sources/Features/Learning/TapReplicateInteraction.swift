@@ -5,6 +5,7 @@
 //  Interactive multiplication: tap to replicate groups
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct TapReplicateInteraction: View {
@@ -167,3 +168,4 @@ private struct GroupContainer: View {
     TapReplicateInteraction(config: nil, onComplete: {})
         .padding()
 }
+#endif

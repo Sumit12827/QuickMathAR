@@ -6,6 +6,7 @@
 //  specific equation. Each step has level-appropriate reasoning.
 //
 
+#if os(iOS)
 import Foundation
 
 // MARK: - Equation Step Generator
@@ -315,3 +316,4 @@ public struct EquationStepGenerator: Sendable {
         return String(format: "%.2g", value)
     }
 }
+#endif

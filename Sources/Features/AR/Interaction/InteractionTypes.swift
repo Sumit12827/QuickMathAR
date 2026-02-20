@@ -5,6 +5,7 @@
 //  Types and configuration for graph interaction
 //
 
+#if os(iOS)
 import Foundation
 import simd
 import UIKit
@@ -126,3 +127,5 @@ public enum InteractionColors {
 
 /// Threshold for determining if slope is "stationary"
 public let slopeStationaryThreshold: Float = 0.05
+
+#endif

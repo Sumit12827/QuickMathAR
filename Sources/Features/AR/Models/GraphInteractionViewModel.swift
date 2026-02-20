@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  GraphInteractionViewModel.swift
 //  QuickMathsAR
@@ -92,3 +93,4 @@ public class GraphInteractionViewModel: ObservableObject {
         }
     }
 }
+#endif

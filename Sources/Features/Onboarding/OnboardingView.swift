@@ -5,6 +5,7 @@
 //  Enhanced first-launch onboarding experience with engaging animations
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct OnboardingView: View {
@@ -260,3 +261,4 @@ struct IconAnimationModifier: ViewModifier {
     OnboardingView()
         .preferredColorScheme(.dark)
 }
+#endif

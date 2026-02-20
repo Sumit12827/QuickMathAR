@@ -5,6 +5,7 @@
 //  Interactive discovery page with visual element and insight reveal
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Discovery page with interactive element and insight reveal
@@ -329,3 +330,4 @@ private struct TapToRevealElement: View {
         accentColor: .blue
     )
 }
+#endif

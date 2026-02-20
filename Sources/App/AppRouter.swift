@@ -5,6 +5,7 @@
 //  Created on 2026-01-25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Main navigation coordinator view that handles app-level routing
@@ -66,3 +67,4 @@ struct AppRouter: View {
         .environmentObject(NavigationCoordinator())
         .environmentObject(DependencyContainer())
 }
+#endif

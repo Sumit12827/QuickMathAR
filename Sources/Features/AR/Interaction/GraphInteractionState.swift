@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  GraphInteractionState.swift
 //  QuickMathsAR
@@ -186,3 +187,4 @@ public final class GraphInteractionState: ObservableObject {
         isInteractionActive = isZooming || isDragging
     }
 }
+#endif

@@ -6,6 +6,7 @@
 //  Generators are pre-warmed for zero-latency response.
 //
 
+#if os(iOS)
 import UIKit
 import CoreHaptics
 
@@ -141,3 +142,5 @@ public final class HapticManager {
     public func selection() { play(.selection) }
 }
 
+
+#endif

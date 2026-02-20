@@ -5,6 +5,7 @@
 //  Animated reveal for "aha moment" insights
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct InsightRevealView: View {
@@ -49,3 +50,4 @@ struct InsightRevealView: View {
     InsightRevealView(text: "Addition combines separate groups into one total. What was apart is now together!")
         .padding()
 }
+#endif

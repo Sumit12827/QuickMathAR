@@ -5,6 +5,7 @@
 //  Created on 2026-01-25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Settings screen for app configuration
@@ -102,3 +103,4 @@ struct SettingsView: View {
     }
     .preferredColorScheme(.dark)
 }
+#endif

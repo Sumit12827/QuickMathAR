@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 import CoreHaptics
 
@@ -118,3 +119,4 @@ struct Particle: Identifiable {
     var size: CGFloat
     var symbol: String
 }
+#endif

@@ -5,6 +5,7 @@
 //  Displays encouraging guidance when an equation can't be classified
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A view that displays guidance for unrecognized equation types
@@ -387,3 +388,4 @@ struct NextStepRow: View {
         )
     }
 }
+#endif

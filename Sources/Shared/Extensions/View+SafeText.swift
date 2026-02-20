@@ -5,6 +5,8 @@
 //  Created on 2026-02-06.
 //
 
+#if os(iOS)
+
 import SwiftUI
 
 extension View {
@@ -41,3 +43,5 @@ extension View {
             .minimumScaleFactor(minScale)
     }
 }
+
+#endif

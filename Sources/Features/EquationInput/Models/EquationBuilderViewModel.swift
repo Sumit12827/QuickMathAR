@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  EquationBuilderViewModel.swift
 //  QuickMathsAR
@@ -325,3 +326,4 @@ final class EquationBuilderViewModel: ObservableObject {
         generator.impactOccurred()
     }
 }
+#endif

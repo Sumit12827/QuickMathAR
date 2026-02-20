@@ -5,6 +5,8 @@
 //  Created on 2026-02-09.
 //
 
+#if os(iOS)
+
 import SwiftUI
 
 // MARK: - Component Role (Semantic Meaning)
@@ -184,3 +186,5 @@ enum Parenthesis: String, CaseIterable {
         }
     }
 }
+
+#endif

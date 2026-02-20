@@ -5,6 +5,7 @@
 //  Quiz page using QuickChallengeView component
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Challenge page with quiz question
@@ -16,7 +17,7 @@ struct ChallengePageView: View {
         VStack(spacing: 24) {
             // Header
             VStack(spacing: 8) {
-                Image(systemName: "brain.head.profile")
+                Image(systemName: "cpu")
                     .font(.title)
                     .foregroundStyle(accentColor)
 
@@ -69,3 +70,4 @@ struct ChallengePageView: View {
     )
     .padding()
 }
+#endif

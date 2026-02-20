@@ -1,3 +1,5 @@
+#if os(iOS)
+
 import SwiftUI
 
 // MARK: - Design System
@@ -162,3 +164,5 @@ public struct SecondaryButtonStyle: ButtonStyle {
             }
     }
 }
+
+#endif

@@ -6,6 +6,7 @@
 //  computed mathematical properties for the user's specific equation.
 //
 
+#if os(iOS)
 import Foundation
 
 // MARK: - Coefficient Info
@@ -108,3 +109,4 @@ public enum EquationAnalysisState: Equatable {
         }
     }
 }
+#endif

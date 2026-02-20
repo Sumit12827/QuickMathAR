@@ -5,6 +5,7 @@
 //  Container for AR graph visualization with equation parsing and navigation
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Container view that wraps ARGraphScreen with proper equation parsing,
@@ -239,21 +240,19 @@ public struct ARVisualizationContainerView: View {
             
             VStack(spacing: 16) {
                 if equationType == .linear {
-                    // Slope slider
                     ParameterSlider(
                         label: "Slope (m)",
                         value: $slope,
                         range: -5...5,
                         step: 0.5,
                         color: accentColor,
-                        hint: slope > 0 ? "Rising ↗" : (slope < 0 ? "Falling ↘" : "Flat →")
+                        hint: slope > 0 ? "Rising \u{2197}" : (slope < 0 ? "Falling \u{2198}" : "Flat \u{2192}")
                     )
                     .onChange(of: slope) { _, _ in
                         triggerHaptic()
                         hasInteracted = true
                     }
-                    
-                    // Y-intercept slider
+
                     ParameterSlider(
                         label: "Y-Intercept (b)",
                         value: $yIntercept,
@@ -266,23 +265,20 @@ public struct ARVisualizationContainerView: View {
                         triggerHaptic()
                         hasInteracted = true
                     }
-                    
                 } else {
-                    // Coefficient A slider
                     ParameterSlider(
                         label: "Coefficient a",
                         value: $coefficientA,
                         range: -3...3,
                         step: 0.5,
                         color: accentColor,
-                        hint: coefficientA > 0 ? "Opens up ∪" : (coefficientA < 0 ? "Opens down ∩" : "Not a parabola!")
+                        hint: coefficientA > 0 ? "Opens up \u{222A}" : (coefficientA < 0 ? "Opens down \u{2229}" : "Not a parabola!")
                     )
                     .onChange(of: coefficientA) { _, _ in
                         triggerHaptic()
                         hasInteracted = true
                     }
-                    
-                    // Coefficient B slider
+
                     ParameterSlider(
                         label: "Coefficient b",
                         value: $coefficientB,
@@ -295,8 +291,7 @@ public struct ARVisualizationContainerView: View {
                         triggerHaptic()
                         hasInteracted = true
                     }
-                    
-                    // Coefficient C slider
+
                     ParameterSlider(
                         label: "Coefficient c",
                         value: $coefficientC,
@@ -316,6 +311,10 @@ public struct ARVisualizationContainerView: View {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color(.secondarySystemGroupedBackground))
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(accentColor.opacity(0.15), lineWidth: 1)
+            )
         }
     }
     
@@ -331,9 +330,14 @@ public struct ARVisualizationContainerView: View {
                 Image(systemName: "chart.xyaxis.line")
                     .foregroundStyle(.secondary)
             }
-            
+
             Graph2DView(graphData: graphData)
                 .frame(height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(accentColor.opacity(0.15), lineWidth: 1)
+                )
         }
     }
     
@@ -483,3 +487,4 @@ struct InstructionRow: View {
         .environmentObject(NavigationCoordinator())
     }
 }
+#endif

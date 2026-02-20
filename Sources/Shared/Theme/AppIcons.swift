@@ -6,6 +6,7 @@
 //  All icons use SF Symbols only - no custom icons
 //
 
+#if os(iOS)
 import SwiftUI
 
 // MARK: - App Icons
@@ -62,8 +63,8 @@ public enum AppIcons {
     /// Lightbulb with fill
     public static let lightbulbFill = "lightbulb.fill"
     
-    /// Brain/thinking
-    public static let brain = "brain.head.profile"
+    /// On-device processing
+    public static let brain = "cpu"
     
     /// Book/learning
     public static let book = "book"
@@ -180,3 +181,4 @@ public struct AppIcon: View {
 /// - ✗ Use overly complex or detailed icons
 /// - ✗ Use icons without semantic meaning
 public enum IconStyleGuidelines {}
+#endif

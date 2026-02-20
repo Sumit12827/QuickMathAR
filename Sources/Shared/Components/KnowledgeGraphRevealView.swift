@@ -8,6 +8,7 @@
 //  ~2.5s total, skippable, reduce-motion safe.
 //
 
+#if os(iOS)
 import SwiftUI
 
 // MARK: - Knowledge Node Model
@@ -233,3 +234,4 @@ struct ConnectionLine: Shape {
         print("Dismissed")
     }
 }
+#endif

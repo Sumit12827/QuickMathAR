@@ -6,6 +6,7 @@
 //  Supports Dynamic Type for accessibility
 //
 
+#if os(iOS)
 import SwiftUI
 
 // MARK: - App Typography
@@ -143,3 +144,4 @@ public struct EquationText: View {
             .foregroundStyle(AppColors.textPrimary)
     }
 }
+#endif

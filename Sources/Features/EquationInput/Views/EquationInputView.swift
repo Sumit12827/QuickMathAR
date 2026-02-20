@@ -5,6 +5,7 @@
 //  Created on 2026-02-09.
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct EquationInputView: View {
@@ -74,3 +75,4 @@ struct EquationInputView: View {
     }
     .preferredColorScheme(.dark)
 }
+#endif

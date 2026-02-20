@@ -5,6 +5,7 @@
 //  2D graph visualization fallback when AR is unavailable
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A 2D graph visualization view (non-AR fallback)
@@ -296,3 +297,4 @@ struct LegendDot: View {
     )
     .padding()
 }
+#endif

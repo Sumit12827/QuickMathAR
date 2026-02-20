@@ -1,3 +1,4 @@
+#if os(iOS)
 import RealityKit
 import SwiftUI
 import Combine
@@ -32,3 +33,5 @@ extension SimpleMaterial {
     static let graphNeon = SimpleMaterial(color: .cyan, isMetallic: false)
     static let graphPurple = SimpleMaterial(color: .purple, isMetallic: false)
 }
+
+#endif

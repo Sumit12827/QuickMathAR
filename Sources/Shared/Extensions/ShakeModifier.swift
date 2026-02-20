@@ -5,6 +5,7 @@
 //  Spec-compliant error shake: 3° rotation oscillation (gentle correction).
 //
 
+#if os(iOS)
 import SwiftUI
 
 // MARK: - Shake Geometry Effect
@@ -59,3 +60,4 @@ struct ShakeViewModifier: ViewModifier {
             }
     }
 }
+#endif

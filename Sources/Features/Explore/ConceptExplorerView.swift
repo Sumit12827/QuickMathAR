@@ -5,6 +5,7 @@
 //  Allows users to browse and learn concepts from scratch
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A view for exploring equation types and concepts from scratch
@@ -449,3 +450,4 @@ struct ComingSoonBadge: View {
     }
     .preferredColorScheme(.dark)
 }
+#endif

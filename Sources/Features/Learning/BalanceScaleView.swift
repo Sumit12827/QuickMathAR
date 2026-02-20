@@ -5,6 +5,7 @@
 //  Interactive balance scale for visualizing equation operations
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct BalanceScaleView: View {
@@ -221,3 +222,4 @@ private struct ScalePan: View {
     BalanceScaleView(leftSide: "2x + 5", rightSide: "13")
         .padding()
 }
+#endif

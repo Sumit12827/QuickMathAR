@@ -1,3 +1,4 @@
+#if os(iOS)
 //
 //  HomeViewModel.swift
 //  QuickMathsAR
@@ -31,3 +32,4 @@ final class HomeViewModel: ObservableObject, ViewModelProtocol {
         // Cleanup when view disappears
     }
 }
+#endif

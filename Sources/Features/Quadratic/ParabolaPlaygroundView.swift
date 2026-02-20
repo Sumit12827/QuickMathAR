@@ -5,6 +5,7 @@
 //  Interactive parabola graph with sliders for a, b, c coefficients
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// Interactive parabola playground with coefficient sliders
@@ -329,3 +330,4 @@ private struct CoefficientSlider: View {
     ParabolaPlaygroundView()
         .padding()
 }
+#endif

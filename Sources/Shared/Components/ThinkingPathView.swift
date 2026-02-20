@@ -5,6 +5,7 @@
 //  Displays the visual thinking path as connected steps before the solution
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A view that displays the thinking path as connected nodes
@@ -114,3 +115,4 @@ private struct ThinkingStepRow: View {
     ])
     .padding()
 }
+#endif

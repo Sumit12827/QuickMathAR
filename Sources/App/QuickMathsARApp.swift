@@ -5,6 +5,7 @@
 //  Created on 2026-01-25.
 //
 
+#if os(iOS)
 import SwiftUI
 
 @main
@@ -38,3 +39,4 @@ struct QuickMathsARApp: App {
         }
     }
 }
+#endif

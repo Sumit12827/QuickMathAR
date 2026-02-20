@@ -5,6 +5,7 @@
 //  Manages visual feedback during graph interactions
 //
 
+#if os(iOS)
 import UIKit
 import RealityKit
 import simd
@@ -282,3 +283,5 @@ public final class VisualFeedbackController {
         removeAllFeedback()
     }
 }
+
+#endif

@@ -5,6 +5,8 @@
 //  Analyzes curve for increasing/decreasing regions
 //
 
+#if os(iOS)
+
 import Foundation
 import simd
 
@@ -172,3 +174,5 @@ public struct CurveRegionInfo {
         return endIndex - startIndex
     }
 }
+
+#endif

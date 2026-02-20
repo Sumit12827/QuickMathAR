@@ -6,6 +6,7 @@
 //  Sticky at the top of the learning flow, controls all cards below.
 //
 
+#if os(iOS)
 import SwiftUI
 
 struct DetailLevelSelectorView: View {
@@ -33,7 +34,7 @@ struct DetailLevelSelectorView: View {
                 Spacer()
                 
                 if isAIAvailable {
-                    Label("AI-Enhanced", systemImage: "brain.head.profile")
+                    Label("On-Device", systemImage: "cpu")
                         .font(.caption2)
                         .fontWeight(.medium)
                         .foregroundStyle(.purple.opacity(0.8))
@@ -132,4 +133,4 @@ struct DetailLevelSelectorView: View {
     
     return PreviewWrapper()
 }
-
+#endif

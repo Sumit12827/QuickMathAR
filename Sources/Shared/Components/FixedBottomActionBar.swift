@@ -5,6 +5,7 @@
 //  Reusable fixed bottom action bar for always-visible CTAs
 //
 
+#if os(iOS)
 import SwiftUI
 
 /// A fixed bottom action bar that keeps primary CTAs always visible
@@ -140,3 +141,4 @@ extension FixedBottomActionBar where SecondaryLabel == EmptyView {
         }
     }
 }
+#endif
