@@ -97,19 +97,23 @@ public final class EquationAnalyzer: ObservableObject {
     
     private func generateAIInsights(equation: String, type: EquationType, parsed: ParsedEquation?) async -> AIInsights {
         // Try System Intelligence first (iOS 26+)
-        if #available(iOS 26, *) {
+        let modelAvailable = isFoundationModelAvailable()
+        print("EquationAnalyzer: generating insights, model available = \(modelAvailable)")
+
+        if #available(iOS 26, *), modelAvailable {
             do {
                 let service = FoundationalModelService()
                 let result = try await service.generateEquationAnalysis(
                     equation: equation,
                     type: type
                 )
+                print("EquationAnalyzer: AI insights generated successfully")
                 return AIInsights(whatItDoes: result.whatItDoes, analogy: result.analogy)
             } catch {
-                // Fall through to template
+                print("EquationAnalyzer: AI generation failed — \(error.localizedDescription), using template")
             }
         }
-        
+
         // Template fallback
         return templateInsights(equation: equation, type: type, parsed: parsed)
     }

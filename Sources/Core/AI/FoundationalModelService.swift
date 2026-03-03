@@ -23,10 +23,16 @@ import FoundationModels
 public func isFoundationModelAvailable() -> Bool {
     #if canImport(FoundationModels)
     if #available(iOS 26, *) {
-        return FoundationalModelService.checkAvailability()
+        let result = FoundationalModelService.checkAvailability()
+        return result
+    } else {
+        print("FoundationModel: iOS 26 not available (running older iOS)")
+        return false
     }
-    #endif
+    #else
+    print("FoundationModel: FoundationModels framework not available at compile time")
     return false
+    #endif
 }
 
 // MARK: - Service
@@ -36,7 +42,8 @@ public func isFoundationModelAvailable() -> Bool {
 public final class FoundationalModelService: @unchecked Sendable {
     
     /// Timeout for model response in seconds.
-    private let timeoutSeconds: TimeInterval = 4.0
+    /// On first invocation the model loads into memory, so allow generous time.
+    private let timeoutSeconds: TimeInterval = 15.0
     
     public init() {}
     
@@ -47,7 +54,17 @@ public final class FoundationalModelService: @unchecked Sendable {
     static func checkAvailability() -> Bool {
         #if canImport(FoundationModels)
         let availability = SystemLanguageModel.default.availability
-        return availability == .available
+        print("FoundationModel: SystemLanguageModel.default.availability = \(availability)")
+        switch availability {
+        case .available:
+            return true
+        case .unavailable(let reason):
+            print("FoundationModel: unavailable — reason: \(reason)")
+            return false
+        @unknown default:
+            print("FoundationModel: unknown availability state \(availability)")
+            return false
+        }
         #else
         return false
         #endif
@@ -72,23 +89,25 @@ public final class FoundationalModelService: @unchecked Sendable {
     ) async throws -> StepExplanation {
         #if canImport(FoundationModels)
         let prompt = buildPrompt(context: context, level: level, followUpQuestion: followUpQuestion)
-        
+        print("FoundationModel: generating step explanation for step \(context.stepNumber)...")
+
         let session = LanguageModelSession()
-        
+
         // Use withThrowingTaskGroup with a timeout
         return try await withThrowingTaskGroup(of: StepExplanation.self) { group in
             // The actual generation task
             group.addTask {
                 let response = try await session.respond(to: prompt)
+                print("FoundationModel: step explanation received (\(response.content.count) chars)")
                 return self.parseResponse(response.content)
             }
-            
+
             // Timeout task
             group.addTask {
                 try await Task.sleep(for: .seconds(self.timeoutSeconds))
                 throw FoundationalModelError.timeout
             }
-            
+
             // Return whichever finishes first; if timeout wins, it throws
             guard let result = try await group.next() else {
                 throw FoundationalModelError.noResponse
@@ -216,20 +235,22 @@ public final class FoundationalModelService: @unchecked Sendable {
     ) async throws -> EquationInsight {
         #if canImport(FoundationModels)
         let prompt = buildEquationAnalysisPrompt(equation: equation, type: type)
-        
+        print("FoundationModel: generating equation analysis for '\(equation)'...")
+
         let session = LanguageModelSession()
-        
+
         return try await withThrowingTaskGroup(of: EquationInsight.self) { group in
             group.addTask {
                 let response = try await session.respond(to: prompt)
+                print("FoundationModel: equation analysis received (\(response.content.count) chars)")
                 return self.parseEquationAnalysisResponse(response.content)
             }
-            
+
             group.addTask {
                 try await Task.sleep(for: .seconds(self.timeoutSeconds))
                 throw FoundationalModelError.timeout
             }
-            
+
             guard let result = try await group.next() else {
                 throw FoundationalModelError.noResponse
             }
@@ -314,3 +335,4 @@ public enum FoundationalModelError: Error, LocalizedError {
     }
 }
 #endif
+

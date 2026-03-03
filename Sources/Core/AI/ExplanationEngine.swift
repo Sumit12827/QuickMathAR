@@ -24,8 +24,10 @@ public final class ExplanationEngine {
     /// Current explanation depth level (shared across all steps)
     public var currentLevel: ExplanationLevel = .beginner
     
-    /// Whether the AI model is available on this device
-    public private(set) var isModelAvailable: Bool = false
+    /// Whether the AI model is available on this device (checked dynamically)
+    public var isModelAvailable: Bool {
+        isFoundationModelAvailable()
+    }
     
     // MARK: - Private
     
@@ -45,7 +47,7 @@ public final class ExplanationEngine {
         self.modelService = FoundationalModelService()
         self.cache = ExplanationCache()
         self.fallback = FallbackExplanationProvider()
-        self.isModelAvailable = isFoundationModelAvailable()
+        print("ExplanationEngine: initialized, model available = \(isFoundationModelAvailable())")
     }
     
     // MARK: - Public API
@@ -91,24 +93,30 @@ public final class ExplanationEngine {
         )
         
         // 5. Generate (async)
+        let level = self.currentLevel
         let task = Task { [weak self] in
             guard let self = self else { return }
-            
+
             var explanation: StepExplanation?
             var isAIGenerated = false
-            
+
+            // Check availability fresh each time
+            let modelAvailable = isFoundationModelAvailable()
+            print("ExplanationEngine: requesting explanation, model available = \(modelAvailable)")
+
             // Try AI model first
-            if self.isModelAvailable {
+            if modelAvailable {
                 explanation = await self.generateWithModel(
                     context: context,
-                    level: self.currentLevel
+                    level: level
                 )
                 isAIGenerated = explanation != nil
+                print("ExplanationEngine: AI generation \(isAIGenerated ? "succeeded" : "failed, using fallback")")
             }
-            
+
             // Fallback to JSON-derived explanation
             if explanation == nil {
-                explanation = self.fallback.explanation(from: step, level: self.currentLevel)
+                explanation = self.fallback.explanation(from: step, level: level)
             }
             
             guard !Task.isCancelled, let result = explanation else { return }
@@ -154,28 +162,32 @@ public final class ExplanationEngine {
             previousStepResult: previousStepResult
         )
         
+        let followUpLevel = self.currentLevel
         let task = Task { [weak self] in
             guard let self = self else { return }
-            
+
             var explanation: StepExplanation?
-            
-            if self.isModelAvailable {
+            var isAIGenerated = false
+
+            let modelAvailable = isFoundationModelAvailable()
+            if modelAvailable {
                 explanation = await self.generateWithModel(
                     context: context,
-                    level: self.currentLevel,
+                    level: followUpLevel,
                     followUpQuestion: question
                 )
+                isAIGenerated = explanation != nil
             }
-            
+
             if explanation == nil {
                 // For follow-ups, fallback to the standard explanation
-                explanation = self.fallback.explanation(from: step, level: self.currentLevel)
+                explanation = self.fallback.explanation(from: step, level: followUpLevel)
             }
-            
+
             guard !Task.isCancelled, let result = explanation else { return }
-            
+
             await MainActor.run {
-                self.explanationStates[key] = self.isModelAvailable ? .loaded(result) : .fallback(result)
+                self.explanationStates[key] = isAIGenerated ? .loaded(result) : .fallback(result)
             }
         }
         
